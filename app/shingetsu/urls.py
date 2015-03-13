@@ -8,7 +8,7 @@ _time = '(?P<time>.*)'
 urlpatterns = patterns('',
 	url(r'^ping$', ping.as_view()),
 	url(r'^node$', node.as_view()),
-	url(r'^join/'+_node+'$', join.as_view()),
+	url(r'^join/'+_node+'?$', join.as_view()),
 	url(r'^bye/'+_node+'$',  bye.as_view()),
 	url(r'^have/'+_file+'$', have.as_view()),
 	url(r'^get/'+_file+'/'+_time+'$', get.as_view()),

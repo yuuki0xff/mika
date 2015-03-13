@@ -16,7 +16,14 @@ class ping(View):
 		return response
 
 class node(View):
-	pass
+	def dispatch(self, request, *args, **kwargs):
+		addr = request.META['REMOTE_ADDR']
+		response = HttpResponse()
+		s = Session()
+		nodeAddr = s.query(Node.host).filter(Node.host != addr).value(Node.host)
+		if nodeAddr is not None:
+			response.write(str(nodeAddr))
+		return response
 
 class join(View):
 	pass

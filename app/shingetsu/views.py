@@ -54,7 +54,18 @@ class join(View):
 
 
 class bye(View):
-	pass
+	def dispatch(self, request, *args, **kwargs):
+		addr = request.META['REMOTE_ADDR']
+		if kwargs['node']:
+			addr = kwargs['node']
+		response = HttpResponse()
+		s = Session()
+		thisNode = s.query(Node).filter(Node.host == addr).first()
+		if thisNode:
+			thisNode.linked = False
+			s.commit()
+			response.write('BYEBYE')
+		return response
 
 class have(View):
 	pass

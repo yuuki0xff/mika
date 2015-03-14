@@ -1,6 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# 朔のキャッシュをmikaのデータベースへインポートします
+# 使い方:
+#    python3 cache2db.py path/to/cache/dir
+#   OR
+#    python3 cache2db.py --exclude-removed path/to/cache/dir
+
+# DBの設定
+DB_NAME = 'mika'
+DB_USER = 'root'
+DB_PASSWD = 'root'
+
+
+
 from mysql.connector import connect as mysqlConnect
 import os
 import sys
@@ -16,7 +29,7 @@ def log(s):
 	sys.stdout.buffer.write((s + "\n").encode('UTF-8'))
 
 def main():
-	con = mysqlConnect(db='mika', user='root', passwd='root')
+	con = mysqlConnect(db=DB_NAME, user=DB_USER, passwd=DB_PASSWD)
 	cur = con.cursor()
 
 	cache_dir = './cache'

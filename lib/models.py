@@ -10,9 +10,8 @@ Session = sessionmaker(bind=engine)
 __all__ = "Session Base tableNames".split()
 tableNames = []
 
-# for table in 'thread record record_post record_attach record_remove record_signature tagname tag'.split():
-for table in 'thread record tagname tag'.split():
-	className = table.capitalize()
+for table in 'thread record record_post record_attach record_remove_notify record_signature tagname tag node'.split():
+	className = ''.join([s.capitalize() for s in table.split('_')])
 	exec('{className} = Base.classes.{tableName}'.format(
 		className = className,
 		tableName = table,

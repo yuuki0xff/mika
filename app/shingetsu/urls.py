@@ -3,7 +3,10 @@ from app.shingetsu.views import *
 
 _node = '(?P<node>.+)'
 _file = '(?P<file>[^/]+)'
-_time = '(?P<time>.*)'
+_time = '('+'|'.join([
+	'(?P<time>[0-9]+)(/(?P<iden>.+))?',
+	'((?P<stime>[0-9]+)?-(?P<etime>[0-9]+)?)',
+	])+')'
 
 urlpatterns = patterns('',
 	url(r'^ping$', ping.as_view()),

@@ -19,10 +19,13 @@ def getRecords(title, stime=None, etime=None):
 	if not thread_id:
 		return None
 	allRecords = s.query(Record).filter(Record.thread_id == thread_id)
-	if stime:
-		allRecords = allRecords.filter(Record.timestamp >= stime)
-	if etime:
-		allRecords = allRecords.filter(Record.timestamp <= etime)
+	if stime is not None:
+		Record.timestamp >= datetime.fromtimestamp(stime)
+		if stime == 0:
+			stime = 1
+		allRecords = allRecords.filter(Record.timestamp >= datetime.fromtimestamp(stime))
+	if etime is not None:
+		allRecords = allRecords.filter(Record.timestamp <= datetime.fromtimestamp(etime))
 	return allRecords
 
 def record2str(query, include_body=1):
@@ -152,8 +155,9 @@ class get(View):
 		response = HttpResponse()
 		if prefix=='thread':
 			title = a2b_hex(basename)
-			allRecords = getRecords(title)
-			response.write(''.join(record2str(allRecords)))
+			allRecords = getRecords(title, stime, etime)
+			for line in record2str(allRecords, 1):
+				response.write(line)
 		return response
 
 class head(View):
@@ -167,8 +171,9 @@ class head(View):
 		response = HttpResponse()
 		if prefix=='thread':
 			title = a2b_hex(basename)
-			allRecords = getRecords(title)
-			response.write(''.join(record2str(allRecords, 0)))
+			allRecords = getRecords(title, stime, etime)
+			for line in record2str(allRecords, 0):
+				response.write(line)
 		return response
 
 class update(View):

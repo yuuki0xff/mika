@@ -6,6 +6,7 @@ from lib.models import *
 from binascii import *
 from base64 import b64encode, b64decode
 import time
+from datetime import datetime
 
 __all__ = 'ping node join bye have get head update recent'.split()
 
@@ -48,6 +49,20 @@ def record2str(query, include_body=1):
 				int(time.mktime(r.timestamp.timetuple())),
 				'<>'.join([key + ':' + str(line[key]) for key in line.keys()]),
 			)
+
+def getTimeRange(atime, starttime, endtime):
+	if atime:
+		return (int(atime), int(atime))
+	if starttime:
+		if endtime:
+			return (int(starttime), int(endtime))
+		now = time.mktime(datetime.now().timetuple())
+		return (int(starttime), now)
+	else:
+		if endtime:
+			return (0, int(endtime))
+		raise 'ERROR'
+
 
 class ping(View):
 	def dispatch(self, request, *args, **kwargs):
@@ -129,6 +144,11 @@ class have(View):
 class get(View):
 	def dispatch(self, request, *args, **kwargs):
 		prefix, basename = splitFileName(kwargs['file'])
+		stime, etime = getTimeRange(
+				kwargs.get('time'),
+				kwargs.get('stime'),
+				kwargs.get('etime'),
+				)
 		response = HttpResponse()
 		if prefix=='thread':
 			title = a2b_hex(basename)
@@ -139,6 +159,11 @@ class get(View):
 class head(View):
 	def dispatch(self, request, *args, **kwargs):
 		prefix, basename = splitFileName(kwargs['file'])
+		stime, etime = getTimeRange(
+				kwargs.get('time'),
+				kwargs.get('stime'),
+				kwargs.get('etime'),
+				)
 		response = HttpResponse()
 		if prefix=='thread':
 			title = a2b_hex(basename)

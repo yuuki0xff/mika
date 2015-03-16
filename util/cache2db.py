@@ -43,6 +43,7 @@ def main():
 				return 1
 		else:
 			cache_dir = argv
+	cache_dir.rstrip('/')
 
 	cut_index = len('thread_')
 	count_all_rec = 0
@@ -85,7 +86,7 @@ def main():
 					cur.execute('insert into record_removed(thread_id, bin_id, timestamp) values(%s,%s,%s)', (thread_id, record_id_bin, record_stamp))
 					continue
 
-				records = load_text(cache_dir+'/'+thread+'/record/'+record).split('<>')
+				records = load_text(cache_dir+'/'+thread+'/record/'+record).strip().split('<>')
 				record_body = {}
 				for i in records[2:]:
 					s = i.index(':')

@@ -35,6 +35,9 @@ class Thread(Base):
 		if 'title' in kwargs:
 			query = query.filter(Thread.title == kwargs['title'])
 		return query
+	@classmethod
+	def getFileName(cls, title):
+		return 'thread_' + b2a_hex(title.encode('utf-8')).decode('utf-8')
 
 class Record(Base):
 	__tablename__ = 'record'

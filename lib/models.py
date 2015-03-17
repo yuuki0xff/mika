@@ -17,6 +17,7 @@ tableNames = [
 		'RecordAttach',
 		'RecordRemoveNotify',
 		'RecordSignature',
+		'RecordRaw',
 		'Tagname',
 		'Tag',
 		'Node',
@@ -71,6 +72,15 @@ class RecordRemoveNotify(Base):
 class RecordSignature(Base):
 	__tablename__ = 'record_signature'
 	__table_args__ = {'autoload': True}
+
+class RecordRaw(Base):
+	__tablename__ = 'record_raw'
+	__table_args__ = {'autoload': True}
+
+	@classmethod
+	def get(cls, session, record_id):
+		return session.query(cls)\
+				.filter(cls.record_id == record_id)
 
 class Tagname(Base):
 	__tablename__ = 'tagname'

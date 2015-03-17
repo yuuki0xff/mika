@@ -1,21 +1,99 @@
 from sqlalchemy import create_engine
-from sqlalchemy.ext.automap import automap_base
+from sqlalchemy import select
 from sqlalchemy.orm.session import Session, sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+from datetime import datetime
 
 engine = create_engine('mysql+mysqlconnector://root:root@localhost/mika', echo=False)
-Base = automap_base()
-Base.prepare(engine, reflect=True)
+Base = declarative_base()
 Session = sessionmaker(bind=engine)
+Base.metadata.bind = engine
 
-__all__ = "Session Base tableNames".split()
-tableNames = []
+__all__ = "Session".split()
+tableNames = [
+		'Thread',
+		'Record',
+		'RecordPost',
+		'RecordAttach',
+		'RecordRemoveNotify',
+		'RecordSignature',
+		'Tagname',
+		'Tag',
+		'Node',
+		]
+__all__ = __all__ + tableNames
 
-for table in 'thread record record_post record_attach record_remove_notify record_signature tagname tag node'.split():
-	className = ''.join([s.capitalize() for s in table.split('_')])
-	exec('{className} = Base.classes.{tableName}'.format(
-		className = className,
-		tableName = table,
-		))
-	tableNames.append(className)
-	__all__.append(className)
+class Thread(Base):
+	__tablename__ = 'thread'
+	__table_args__ = {'autoload': True}
+	@classmethod
+	def get(cls, session, title):
+		return session.query(cls)\
+				.filter(Thread.title == title)\
+				.limit(1)
+
+class Record(Base):
+	__tablename__ = 'record'
+	__table_args__ = {'autoload': True}
+
+	@classmethod
+	def gets(cls, session, thread_id, stime, etime):
+		allRecords = session.query(Record).filter(Record.thread_id == thread_id)
+		if stime is not None:
+			Record.timestamp >= datetime.fromtimestamp(stime)
+			if stime == 0:
+				stime = 1
+			allRecords = allRecords.filter(Record.timestamp >= datetime.fromtimestamp(stime))
+		if etime is not None:
+			allRecords = allRecords.filter(Record.timestamp <= datetime.fromtimestamp(etime))
+		return allRecords
+	@classmethod
+	def get(cls, session, thread_id, bin_id, timestamp):
+		return session.query(cls)\
+				.filter(
+					cls.thread_id == thread_id,
+					cls.bin_id == bin_id,
+					cls.timestamp == datetime.fromtimestamp(atime)
+					)
+
+class RecordPost(Base):
+	__tablename__ = 'record_post'
+	__table_args__ = {'autoload': True}
+
+class RecordAttach(Base):
+	__tablename__ = 'record_attach'
+	__table_args__ = {'autoload': True}
+
+class RecordRemoveNotify(Base):
+	__tablename__ = 'record_remove_notify'
+	__table_args__ = {'autoload': True}
+
+class RecordSignature(Base):
+	__tablename__ = 'record_signature'
+	__table_args__ = {'autoload': True}
+
+class Tagname(Base):
+	__tablename__ = 'tagname'
+	__table_args__ = {'autoload': True}
+
+class Tag(Base):
+	__tablename__ = 'tag'
+	__table_args__ = {'autoload': True}
+
+class Node(Base):
+	__tablename__ = 'node'
+	__table_args__ = {'autoload': True}
+
+	@classmethod
+	def getThisNode(cls, session, addr):
+		return session.query(cls)\
+				.filter(cls.host == addr)
+	@classmethod
+	def getOtherNode(cls, session, addr):
+		return session.query(cls)\
+				.filter(cls.host != addr)
+	@classmethod
+	def getLinkedNode(cls, session):
+		return session.query(cls)\
+				.filter(cls.linked == True)
 

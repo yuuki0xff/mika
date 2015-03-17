@@ -13,21 +13,6 @@ __all__ = 'ping node join bye have get head update recent'.split()
 def splitFileName(fname):
 	return fname.split('_', 2)
 
-def getRecords(title, stime=None, etime=None):
-	s = Session()
-	thread_id = s.query(Thread.id).filter(Thread.title == title).first()[0]
-	if not thread_id:
-		return None
-	allRecords = s.query(Record).filter(Record.thread_id == thread_id)
-	if stime is not None:
-		Record.timestamp >= datetime.fromtimestamp(stime)
-		if stime == 0:
-			stime = 1
-		allRecords = allRecords.filter(Record.timestamp >= datetime.fromtimestamp(stime))
-	if etime is not None:
-		allRecords = allRecords.filter(Record.timestamp <= datetime.fromtimestamp(etime))
-	return allRecords
-
 def record2str(query, include_body=1):
 	s = Session()
 	if not include_body:
@@ -46,7 +31,7 @@ def record2str(query, include_body=1):
 				line['remove_stamp'] = rr.remove_stamp
 			if r.is_attach:
 				ra = s.query(RecordAttach).filter(RecordAttach.record_id == r.id).one()
-				line['attach'] = ra.attach #b64encode(ra.attach)
+				line['attach'] = ra.attach
 				line['suffix'] = ra.suffix
 		yield '{}<>thread<>{}\n'.format(
 				int(time.mktime(r.timestamp.timetuple())),
@@ -73,7 +58,7 @@ class ping(View):
 		response = HttpResponse()
 		response.write("PONG\n"+str(addr))
 		s = Session()
-		if not s.query(Node).filter(Node.host == addr).first():
+		if not Node.getThisNode(s, addr).first():
 			s.add(Node(host=addr))
 			s.commit()
 		s.close()
@@ -84,9 +69,9 @@ class node(View):
 		addr = request.META['REMOTE_ADDR']
 		response = HttpResponse()
 		s = Session()
-		nodeAddr = s.query(Node.host).filter(Node.host != addr).value(Node.host)
-		if nodeAddr is not None:
-			response.write(str(nodeAddr))
+		node = Node.getOtherNode(s, addr).first()
+		if node is not None:
+			response.write(str(node.host))
 		return response
 
 class join(View):
@@ -96,9 +81,9 @@ class join(View):
 			addr = kwargs['node']
 		response = HttpResponse()
 		s = Session()
-		thisNode = s.query(Node).filter(Node.host == addr).first()
-		otherNode = s.query(Node).filter(Node.host != addr).first()
-		linkedNodeCount = s.query(Node).filter(Node.linked == True).count()
+		thisNode = Node.getThisNode(s, addr).first()
+		otherNode = Node.getOtherNode(s, addr).first()
+		linkedNodeCount = Node.getLinkedNode(s).count()
 
 		welcome = False
 		if thisNode:
@@ -124,7 +109,7 @@ class bye(View):
 			addr = kwargs['node']
 		response = HttpResponse()
 		s = Session()
-		thisNode = s.query(Node).filter(Node.host == addr).first()
+		thisNode = Node.getThisNode(s, addr).first()
 		if thisNode:
 			thisNode.linked = False
 			s.commit()
@@ -138,7 +123,7 @@ class have(View):
 		s = Session()
 		if prefix=='thread':
 			title = a2b_hex(basename)
-			if s.query(Thread.title).filter(Thread.title == title).first():
+			if Thread.get(s, title).value(Thread.id):
 				response.write('YES')
 				return response
 		response.write('NO')
@@ -154,8 +139,10 @@ class get(View):
 				)
 		response = HttpResponse()
 		if prefix=='thread':
+			s = Session()
 			title = a2b_hex(basename)
-			allRecords = getRecords(title, stime, etime)
+			thread_id = Thread.get(s, title).value(Thread.id)
+			allRecords = Record.gets(s, thread_id, stime, etime)
 			for line in record2str(allRecords, 1):
 				response.write(line)
 		return response
@@ -170,8 +157,9 @@ class head(View):
 				)
 		response = HttpResponse()
 		if prefix=='thread':
+			s = Session()
 			title = a2b_hex(basename)
-			allRecords = getRecords(title, stime, etime)
+			allRecords = Record.gets(s, title, stime, etime)
 			for line in record2str(allRecords, 0):
 				response.write(line)
 		return response

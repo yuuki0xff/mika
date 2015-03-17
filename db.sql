@@ -68,6 +68,12 @@ CREATE TABLE record_signature(
 	target CHAR(64) NOT NULL,
 	PRIMARY KEY(record_id)
 );
+CREATE TABLE record_raw(
+	record_id INT UNSIGNED,
+	md5 BINARY(16) NOT NULL,
+	body MEDIUMTEXT NOT NULL,
+	PRIMARY KEY(record_id)
+);
 
 CREATE TABLE tagname(
 	id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

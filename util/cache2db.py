@@ -86,9 +86,10 @@ def main():
 					cur.execute('insert into record_removed(thread_id, bin_id, timestamp) values(%s,%s,%s)', (thread_id, record_id_bin, record_stamp))
 					continue
 
-				records = load_text(cache_dir+'/'+thread+'/record/'+record).strip().split('<>')
+				record_raw = load_text(cache_dir+'/'+thread+'/record/'+record).strip()
+				tmp, md5_hex, body_raw = record_raw.split('<>', 2)
 				record_body = {}
-				for i in records[2:]:
+				for i in body_raw.split('<>'):
 					s = i.index(':')
 					record_body[i[:s]] = i[s+1:]
 				is_rm_notify = False
@@ -106,6 +107,9 @@ def main():
 				cur.execute('insert into record(thread_id, bin_id, timestamp, is_post, is_remove_notify, is_attach) values(%s,%s,%s,%s,%s,%s)',(thread_id, record_id_bin, record_stamp, True, is_rm_notify, is_attach))
 				cur.execute('select last_insert_id()')
 				id = cur.fetchone()[0]
+				cur.execute('insert into record_raw(record_id, md5, body) values(%s,%s,%s)',(
+					id, '0x'+md5_hex, body_raw
+					))
 				cur.execute('insert into record_post(record_id, name, mail, body) values(%s,%s,%s,%s)',(
 					id,
 					record_body.get('name',''),

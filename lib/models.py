@@ -28,10 +28,13 @@ class Thread(Base):
 	__tablename__ = 'thread'
 	__table_args__ = {'autoload': True}
 	@classmethod
-	def get(cls, session, title):
-		return session.query(cls)\
-				.filter(Thread.title == title)\
-				.limit(1)
+	def get(cls, session, **kwargs):
+		query = session.query(cls)
+		if 'id' in kwargs:
+			query = query.filter(Thread.id == kwargs['id'])
+		if 'title' in kwargs:
+			query = query.filter(Thread.title == kwargs['title'])
+		return query
 
 class Record(Base):
 	__tablename__ = 'record'

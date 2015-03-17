@@ -7,6 +7,7 @@ _time = '('+'|'.join([
 	'(?P<time>[0-9]+)(/(?P<iden>.+))?',
 	'((?P<stime>[0-9]+)?-(?P<etime>[0-9]+)?)',
 	])+')'
+_id = '(?P<id>[0-9a-fA-F]{32})'
 
 urlpatterns = patterns('',
 	url(r'^ping$', ping.as_view()),

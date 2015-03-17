@@ -43,7 +43,6 @@ CREATE TABLE record(
 	sign CHAR(64),
 	target CHAR(64),
 	-- raw
-	raw_body_md5 BINARY(16) NOT NULL,
 	raw_body MEDIUMTEXT NOT NULL,
 	PRIMARY KEY(thread_id, timestamp, bin_id),
 	FOREIGN KEY(thread_id) REFERENCES thread(id)

@@ -15,7 +15,7 @@ def record2str(query, include_body=1):
 	for r in query:
 		yield '<>'.join((
 				str(int(time.mktime(r.timestamp.timetuple()))),
-				str(b2a_hex(r.raw_body_md5).decode('utf-8')),
+				str(b2a_hex(r.bin_id).decode('utf-8')),
 				r.raw_body,
 			))+'\n'
 

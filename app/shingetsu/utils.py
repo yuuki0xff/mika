@@ -11,13 +11,12 @@ def splitFileName(fname):
 def record2str(query, include_body=1):
 	s = Session()
 	if not include_body:
-		query = query.with_entities(Record.bin_id, Record.timestamp)
+		query = query.with_entities(Record.bin_id, Record.timestamp, Record.raw_body)
 	for r in query:
-		rr = RecordRaw.get(s, r.id).one()
 		yield '<>'.join((
 				str(int(time.mktime(r.timestamp.timetuple()))),
-				str(b2a_hex(rr.md5).decode('utf-8')),
-				rr.body,
+				str(b2a_hex(r.raw_body_md5).decode('utf-8')),
+				r.raw_body,
 			))+'\n'
 
 def getTimeRange(atime, starttime, endtime):

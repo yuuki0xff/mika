@@ -80,7 +80,7 @@ class have(View):
 		s = Session()
 		if prefix=='thread':
 			title = a2b_hex(basename)
-			if Thread.get(s, title).value(Thread.id):
+			if Thread.get(s, title=title).value(Thread.id):
 				response.write('YES')
 				return response
 		response.write('NO')
@@ -98,7 +98,7 @@ class get(View):
 		if prefix=='thread':
 			s = Session()
 			title = a2b_hex(basename)
-			thread_id = Thread.get(s, title).value(Thread.id)
+			thread_id = Thread.get(s, title=title).value(Thread.id)
 			allRecords = Record.gets(s, thread_id, stime, etime)
 			for line in record2str(allRecords, 1):
 				response.write(line)

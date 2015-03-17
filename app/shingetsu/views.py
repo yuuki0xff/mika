@@ -18,25 +18,12 @@ def record2str(query, include_body=1):
 	if not include_body:
 		query = query.with_entities(Record.bin_id, Record.timestamp)
 	for r in query:
-		line = {}
-		if include_body:
-			if r.is_post:
-				rp = s.query(RecordPost).filter(RecordPost.record_id == r.id).one()
-				line['name'] = rp.name
-				line['mail'] = rp.mail
-				line['body'] = rp.body
-			if r.is_remove_notify:
-				rr = s.query(RecordRemoveNotify).filter(RecordRemoveNotify.record_id == r.id).one()
-				line['remove_id'] = rr.remove_id
-				line['remove_stamp'] = rr.remove_stamp
-			if r.is_attach:
-				ra = s.query(RecordAttach).filter(RecordAttach.record_id == r.id).one()
-				line['attach'] = ra.attach
-				line['suffix'] = ra.suffix
-		yield '{}<>thread<>{}\n'.format(
-				int(time.mktime(r.timestamp.timetuple())),
-				'<>'.join([key + ':' + str(line[key]) for key in line.keys()]),
-			)
+		rr = RecordRaw.get(s, r.id).one()
+		yield '<>'.join((
+				str(int(time.mktime(r.timestamp.timetuple()))),
+				str(b2a_hex(rr.md5).decode('utf-8')),
+				rr.body,
+			))+'\n'
 
 def getTimeRange(atime, starttime, endtime):
 	if atime:

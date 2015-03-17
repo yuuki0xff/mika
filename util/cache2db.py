@@ -102,10 +102,8 @@ def main():
 					record_body.get('body',''),))
 				columnName.extend('name mail body'.split())
 
-				column.extend((
-					binascii.a2b_hex(md5_hex),
-					body_raw,))
-				columnName.extend('raw_body_md5 raw_body'.split())
+				column.extend((body_raw,))
+				columnName.extend('raw_body'.split())
 
 				if 'remove_id' in record_body:
 					column.extend((

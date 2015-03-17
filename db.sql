@@ -23,56 +23,37 @@ CREATE TABLE thread(
 );
 
 CREATE TABLE record(
-	id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-	thread_id INT UNSIGNED NOT NULL,
-	bin_id BINARY(16) NOT NULL,
-	timestamp TIMESTAMP NOT NULL,
-	is_post BOOLEAN NOT NULL DEFAULT TRUE,
-	is_remove_notify BOOLEAN NOT NULL DEFAULT FALSE,
-	is_attach BOOLEAN NOT NULL DEFAULT FALSE,
-	INDEX(thread_id, timestamp)
+	thread_id INT UNSIGNED,
+	timestamp TIMESTAMP,
+	bin_id BINARY(16),
+	-- post
+	name CHAR(255),
+	mail CHAR(255),
+	body MEDIUMTEXT,
+	-- attach
+	attach MEDIUMBLOB,
+	suffix CHAR(8),
+	-- remove_notify
+	remove_id BINARY(16),
+	remove_stamp TIMESTAMP,
+	-- signature
+	-- 公開鍵の長さは86文字 : http://shingetsu.info/protocol/protocol-0.5-2.pdf
+	-- targetのサイズは適当
+	pubkey CHAR(86),
+	sign CHAR(64),
+	target CHAR(64),
+	-- raw
+	raw_body_md5 BINARY(16) NOT NULL,
+	raw_body MEDIUMTEXT NOT NULL,
+	PRIMARY KEY(thread_id, timestamp, bin_id),
+	FOREIGN KEY(thread_id) REFERENCES thread(id)
 );
 CREATE TABLE record_removed(
 	thread_id INT UNSIGNED,
 	timestamp TIMESTAMP,
 	bin_id BINARY(16),
-	PRIMARY KEY(thread_id, timestamp, bin_id)
-);
-CREATE TABLE record_post(
-	-- name,mailのサイズは適当
-	record_id INT UNSIGNED,
-	name CHAR(255) NOT NULL,
-	mail CHAR(255) NOT NULL,
-	body MEDIUMTEXT NOT NULL,
-	PRIMARY KEY(record_id)
-);
-CREATE TABLE record_attach(
-	-- suffixのサイズは適当
-	record_id INT UNSIGNED,
-	attach MEDIUMBLOB NOT NULL,
-	suffix CHAR(8) NOT NULL,
-	PRIMARY KEY(record_id)
-);
-CREATE TABLE record_remove_notify(
-	record_id INT UNSIGNED,
-	remove_id BINARY(16) NOT NULL,
-	remove_stamp TIMESTAMP NOT NULL,
-	PRIMARY KEY(record_id)
-);
-CREATE TABLE record_signature(
-	-- 公開鍵の長さは86文字 : http://shingetsu.info/protocol/protocol-0.5-2.pdf
-	-- targetのサイズは適当
-	record_id INT UNSIGNED,
-	pubkey CHAR(86) NOT NULL,
-	sign CHAR(64) NOT NULL,
-	target CHAR(64) NOT NULL,
-	PRIMARY KEY(record_id)
-);
-CREATE TABLE record_raw(
-	record_id INT UNSIGNED,
-	md5 BINARY(16) NOT NULL,
-	body MEDIUMTEXT NOT NULL,
-	PRIMARY KEY(record_id)
+	PRIMARY KEY(thread_id, timestamp, bin_id),
+	FOREIGN KEY(thread_id) REFERENCES thread(id)
 );
 
 CREATE TABLE tagname(

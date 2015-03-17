@@ -16,7 +16,7 @@ urlpatterns = patterns('',
 	url(r'^have/'+_file+'$', have.as_view()),
 	url(r'^get/'+_file+'/'+_time+'$', get.as_view()),
 	url(r'^head/'+_file+'/'+_time+'$', head.as_view()),
-	url(r'^update/'+_file+'/'+_time+'$', update.as_view()),
+	url(r'^update/'+_file+'/'+_time+'/'+_id+'/('+_node+')?$', update.as_view()),
 	url(r'^recent/'+_time+'$', 'recent'),
 )
 

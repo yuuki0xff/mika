@@ -13,11 +13,6 @@ __all__ = "Session".split()
 tableNames = [
 		'Thread',
 		'Record',
-		'RecordPost',
-		'RecordAttach',
-		'RecordRemoveNotify',
-		'RecordSignature',
-		'RecordRaw',
 		'Tagname',
 		'Tag',
 		'Node',
@@ -62,31 +57,6 @@ class Record(Base):
 					cls.bin_id == bin_id,
 					cls.timestamp == datetime.fromtimestamp(atime)
 					)
-
-class RecordPost(Base):
-	__tablename__ = 'record_post'
-	__table_args__ = {'autoload': True}
-
-class RecordAttach(Base):
-	__tablename__ = 'record_attach'
-	__table_args__ = {'autoload': True}
-
-class RecordRemoveNotify(Base):
-	__tablename__ = 'record_remove_notify'
-	__table_args__ = {'autoload': True}
-
-class RecordSignature(Base):
-	__tablename__ = 'record_signature'
-	__table_args__ = {'autoload': True}
-
-class RecordRaw(Base):
-	__tablename__ = 'record_raw'
-	__table_args__ = {'autoload': True}
-
-	@classmethod
-	def get(cls, session, record_id):
-		return session.query(cls)\
-				.filter(cls.record_id == record_id)
 
 class Tagname(Base):
 	__tablename__ = 'tagname'

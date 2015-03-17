@@ -47,7 +47,7 @@ def main():
 
 	cut_index = len('thread_')
 	count_all_rec = 0
-	for thread in os.listdir(cache_dir):
+	for thread in sorted(os.listdir(cache_dir)):
 		thread_title = binascii.unhexlify(thread[cut_index:]).decode('utf-8','replace')
 
 		con.start_transaction()
@@ -66,7 +66,7 @@ def main():
 			dir_path = cache_dir+'/'+thread+'/record'
 			if is_removed:
 				dir_path = cache_dir+'/'+thread+'/removed'
-			for record in os.listdir(dir_path):
+			for record in sorted(os.listdir(dir_path)):
 				count_rec += 1
 				count_all_rec += 1
 

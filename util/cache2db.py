@@ -92,47 +92,41 @@ def main():
 				for i in body_raw.split('<>'):
 					s = i.index(':')
 					record_body[i[:s]] = i[s+1:]
-				is_rm_notify = False
-				is_attach = False
-				is_sign = False
-				if 'remove_id' in record_body:
-					is_rm_notify = True
-				if 'attach' in record_body:
-					is_attach = True
-				if 'pubkey' in record_body:
-					is_sign = True
-				log("\t".join((str(count_all_rec), str(count_rec), thread_title, record_id, str(record_stamp))))
 
-				#con.start_transaction()
-				cur.execute('insert into record(thread_id, bin_id, timestamp, is_post, is_remove_notify, is_attach) values(%s,%s,%s,%s,%s,%s)',(thread_id, record_id_bin, record_stamp, True, is_rm_notify, is_attach))
-				cur.execute('select last_insert_id()')
-				id = cur.fetchone()[0]
-				cur.execute('insert into record_raw(record_id, md5, body) values(%s,%s,%s)',(
-					id, '0x'+md5_hex, body_raw
-					))
-				cur.execute('insert into record_post(record_id, name, mail, body) values(%s,%s,%s,%s)',(
-					id,
+				column = [thread_id, record_stamp, record_id_bin]
+				columnName = list('thread_id timestamp bin_id'.split())
+
+				column.extend((
 					record_body.get('name',''),
 					record_body.get('mail',''),
 					record_body.get('body',''),))
-				if is_rm_notify:
-					cur.execute('insert into record_remove_notify(record_id, remove_id, remove_stamp) values(%s,%s,%s)', (
-						id,
+				columnName.extend('name mail body'.split())
+
+				column.extend((
+					binascii.a2b_hex(md5_hex),
+					body_raw,))
+				columnName.extend('raw_body_md5 raw_body'.split())
+
+				if 'remove_id' in record_body:
+					column.extend((
 						record_body['remove_id'],
 						record_body['remove_stamp']))
-				if is_attach:
-					cur.execute('insert into record_attach(record_id, attach, suffix) values(%s,%s,%s)', (
-						id,
+					columnName.extend('remove_id remove_stamp'.split())
+				if 'attach' in record_body:
+					column.extend([
 						base64.b64decode(record_body['attach']),
-						record_body['suffix']))
-				if is_sign:
-					cur.execute('insert into record_signature(record_id, pubkey, sign, target) values(%s,%s,%s,%s)', (
-						id,
+						record_body['suffix'],])
+					columnName.extend('attach suffix'.split())
+				if 'pubkey' in record_body:
+					column.extend((
 						record_body['pubkey'],
 						record_body['sign'],
 						record_body['target']))
+					columnName.extend('pubkey sign target'.split())
+				log("\t".join((str(count_all_rec), str(count_rec), thread_title, record_id, str(record_stamp))))
 
-				#con.commit()
+				cur.execute('insert into record({}) values({})'.format(','.join(columnName), ','.join(['%s']*len(columnName))),
+						column)
 		con.commit()
 
 	cur.close()

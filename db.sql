@@ -108,6 +108,8 @@ CREATE TRIGGER delete_record AFTER DELETE ON record FOR EACH ROW
 BEGIN
 	UPDATE thread SET thread.records = thread.records-1
 	WHERE thread.id = OLD.thread_id;
+	INSERT INTO record_removed(thread_id, timestamp, bin_id)
+	VALUES(OLD.thread_id, OLD.bin_id, OLD.timestamp);
 END;
 $$
 

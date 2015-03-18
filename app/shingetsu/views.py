@@ -116,7 +116,8 @@ class head(View):
 		if prefix=='thread':
 			s = Session()
 			title = a2b_hex(basename)
-			allRecords = Record.gets(s, title, stime, etime)
+			thread_id = Thread.get(s, title=title).value(Thread.id)
+			allRecords = Record.gets(s, thread_id, stime, etime)
 			for line in record2str(allRecords, 0):
 				response.write(line)
 		return response

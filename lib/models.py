@@ -16,6 +16,8 @@ tableNames = [
 		'Tagname',
 		'Tag',
 		'Node',
+		'MessageType',
+		'MessageQueue',
 		]
 __all__ = __all__ + tableNames
 
@@ -82,4 +84,33 @@ class Node(Base):
 	def getLinkedNode(cls, session):
 		return session.query(cls)\
 				.filter(cls.linked == True)
+
+class MessageType(Base):
+	__tablename__ = 'message_type'
+	__table_args__ = {'autoload': True}
+
+	@classmethod
+	def get(cls, session, id):
+		return session.query(cls)\
+				.filter(cls.id == id)
+
+class MessageQueue(Base):
+	__tablename__ = 'message_queue'
+	__table_args__ = {'autoload': True}
+
+	@classmethod
+	def enqueue(cls, session, msgtype, msg=''):
+		msgtype_id = session.query(MessageType).filter(MessageType.name == msgtype).value(MessageType.id)
+		session.add(cls(msgtype_id=msgtype_id, msg=msg))
+	@classmethod
+	def dequeue(cls, session):
+		msg = session.query(cls)\
+				.filter(MessageType.id == cls.msgtype_id)\
+				.order_by(MessageType.priority, cls.id)\
+				.first()
+		if msg:
+			session.delete(msg)
+		return msg
+	def getTypeName(self, session):
+		return MessageType.get(session, self.msgtype_id).value(MessageType.name)
 

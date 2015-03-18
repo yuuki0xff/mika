@@ -84,13 +84,16 @@ BEGIN
 	END IF;
 
 	IF NOT (
-		(NEW.attach IS NULL AND NEW.suffix IS NULL) AND
-		(NEW.attach IS NOT NULL AND NEW.suffix IS NOT NULL) AND
-		(NEW.remove_id IS NULL AND NEW.remove_stamp IS NULL) AND
-		(NEW.remove_id IS NOT NULL AND NEW.remove_stamp IS NOT NULL) AND
-		(NEW.pubkey IS NULL AND NEW.sign IS NULL AND NEW.target IS NULL) AND
+		(
+		(NEW.attach IS NULL AND NEW.suffix IS NULL) OR
+		(NEW.attach IS NOT NULL AND NEW.suffix IS NOT NULL)
+		) AND (
+		(NEW.remove_id IS NULL) OR
+		(NEW.remove_id IS NOT NULL)
+		) AND (
+		(NEW.pubkey IS NULL AND NEW.sign IS NULL AND NEW.target IS NULL) OR
 		(NEW.pubkey IS NOT NULL AND NEW.sign IS NOT NULL AND NEW.target IS NOT NULL)
-		) THEN
+		)) THEN
 		UPDATE record SET thread_id = NULL;
 	END IF;
 END;

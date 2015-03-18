@@ -123,7 +123,22 @@ class head(View):
 		return response
 
 class update(View):
-	pass
+	def dispatch(self, request, *args, **kwargs):
+		prefix, basename = splitFileName(kwargs['file'])
+		title = a2b_hex(basename)
+		atime = int(kwargs['time'])
+		id_hex = kwargs['id']
+		addr = request.META['REMOTE_ADDR']
+		if kwargs['node']:
+			addr = kwargs['node']
+		response = HttpResponse()
+		if prefix=='thread':
+			s = Session()
+			thread_id = Thread.get(s, title=title).value(Thread.id)
+			if not thread_id:
+				return response
+			msgqueue.getAndUpdateRecord(addr, thread_id, id_hex, atime)
+		return response
 
 class recent(View):
 	pass

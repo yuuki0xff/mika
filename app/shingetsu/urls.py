@@ -4,7 +4,7 @@ from app.shingetsu.views import *
 _node = '(?P<node>.+)'
 _file = '(?P<file>[^/]+)'
 _time = '('+'|'.join([
-	'(?P<time>[0-9]+)(/(?P<iden>.+))?',
+	'(?P<time>[0-9]+)(/(?P<id>.+))?',
 	'((?P<stime>[0-9]+)?-(?P<etime>[0-9]+)?)',
 	])+')'
 _id = '(?P<id>[0-9a-fA-F]{32})'

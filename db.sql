@@ -74,7 +74,8 @@ CREATE TABLE node(
 
 DELIMITER $$
 
-CREATE TRIGGER insert_record AFTER INSERT ON record FOR EACH ROW
+DROP TRIGGER IF EXISTS mika_insert_record $$
+CREATE TRIGGER mika_insert_record AFTER INSERT ON record FOR EACH ROW
 BEGIN
 	UPDATE thread SET thread.records = thread.records+1
 	WHERE thread.id = NEW.thread_id;
@@ -98,7 +99,8 @@ BEGIN
 	END IF;
 END;
 $$
-CREATE TRIGGER delete_record AFTER DELETE ON record FOR EACH ROW
+DROP TRIGGER IF EXISTS mika_delete_record $$
+CREATE TRIGGER mika_delete_record AFTER DELETE ON record FOR EACH ROW
 BEGIN
 	UPDATE thread SET thread.records = thread.records-1
 	WHERE thread.id = OLD.thread_id;
@@ -107,13 +109,15 @@ BEGIN
 END;
 $$
 
-CREATE TRIGGER insert_record_removed AFTER INSERT ON record_removed FOR EACH ROW
+DROP TRIGGER IF EXISTS mika_insert_record_removed $$
+CREATE TRIGGER mika_insert_record_removed AFTER INSERT ON record_removed FOR EACH ROW
 BEGIN
 	UPDATE thread SET thread.removed_records = thread.removed_records+1
 	WHERE thread.id = NEW.thread_id;
 END;
 $$
-CREATE TRIGGER delete_record_removed AFTER DELETE ON record_removed FOR EACH ROW
+DROP TRIGGER IF EXISTS mika_delete_record_removed $$
+CREATE TRIGGER mika_delete_record_removed AFTER DELETE ON record_removed FOR EACH ROW
 BEGIN
 	UPDATE thread SET thread.removed_records = thread.removed_records-1
 	WHERE thread.id = OLD.thread_id;

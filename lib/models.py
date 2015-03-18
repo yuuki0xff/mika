@@ -55,7 +55,7 @@ class Record(Base):
 				.filter(
 					cls.thread_id == thread_id,
 					cls.bin_id == bin_id,
-					cls.timestamp == datetime.fromtimestamp(atime)
+					cls.timestamp == datetime.fromtimestamp(timestamp)
 					)
 
 class Tagname(Base):

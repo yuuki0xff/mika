@@ -4,7 +4,7 @@ from django.http import HttpResponse
 # from shingetsu.models import *
 from lib.models import *
 from shingetsu.utils import *
-import msgqueue
+from shingetsu import msgqueue_worker
 from binascii import *
 
 __all__ = 'ping node join bye have get head update recent'.split()
@@ -137,7 +137,7 @@ class update(View):
 			thread_id = Thread.get(s, title=title).value(Thread.id)
 			if not thread_id:
 				return response
-			msgqueue.getAndUpdateRecord(addr, thread_id, id_hex, atime)
+			msgqueue_worker.getAndUpdateRecord(addr, thread_id, id_hex, atime)
 		return response
 
 class recent(View):

@@ -4,6 +4,8 @@ import time
 # from base64 import b64encode, b64decode
 from datetime import datetime
 from binascii import *
+from urllib.request import urlopen
+from core import settings
 
 def splitFileName(fname):
 	return fname.split('_', 2)
@@ -31,4 +33,13 @@ def getTimeRange(atime, starttime, endtime):
 		if endtime:
 			return (0, int(endtime))
 		raise 'ERROR'
+
+def httpGet(http_addr):
+	with urlopen(http_addr, timeout=settings.HTTP_TIMEOUT) as httpsock:
+		return httpsock.read()
+
+def str2recordInfo(thread_id, string):
+	for record in string.splitlines():
+		# timestamp, bin_id_hex, body
+		yield record.split('<>', 2)
 

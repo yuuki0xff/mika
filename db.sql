@@ -71,6 +71,25 @@ CREATE TABLE node(
 	timestamp TIMESTAMP
 );
 
+CREATE TABLE message_type(
+	id INT UNSIGNED AUTO_INCREMENT,
+	name CHAR(30) NOT NULL,
+	priority TINYINT(1) UNSIGNED NOT NULL,
+	PRIMARY KEY(id),
+	UNIQUE(name)
+);
+CREATE TABLE message_queue(
+	id INT UNSIGNED AUTO_INCREMENT,
+	msgtype_id INT UNSIGNED NOT NULL,
+	msg CHAR(255) NOT NULL,
+	PRIMARY KEY(id),
+	INDEX USING BTREE(msgtype_id, id),
+	FOREIGN KEY(msgtype_id) REFERENCES message_type(id)
+) ENGINE=MEMORY;
+INSERT INTO message_type(priority, name) values
+	(50, 'get_record'),
+	(60, 'update_record'),
+	(70, 'get_thread');
 
 DELIMITER $$
 

@@ -13,10 +13,16 @@ import os
 import sys
 _ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
 sys.path.extend([
+	_ROOT_DIR,
 	_ROOT_DIR+'/app',
 	_ROOT_DIR+'/lib',
 	_ROOT_DIR+'/require'])
 
+
+MESSAGE_QUEUE_SOCK_FILE = "/run/mika.msgq.sock"
+MAX_THREADS = 16
+MAX_CONNECTIONS = 16
+HTTP_TIMEOUT = 16
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/

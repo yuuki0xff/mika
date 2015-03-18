@@ -21,7 +21,7 @@ def multiThread(worker, queue, maxWorkers=settings.MAX_THREADS, daemon=True, joi
 			t.join()
 	return threads
 
-def dispatcher():
+def dispatcher(workerFunc):
 	with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
 		sock.bind(settings.MESSAGE_QUEUE_SOCK_FILE)
 		sock.listen(1)

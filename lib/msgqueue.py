@@ -3,6 +3,8 @@ import core.settings as settings
 import threading
 import socket
 import time
+import os
+import traceback
 
 def _multiThreadWorker(worker, queue):
 	while not queue.empty():
@@ -41,10 +43,14 @@ def dispatcher(workerFunc):
 					worker(msg)
 				except Exception as e:
 					print('Worker died.')
-					print(e)
+					print('='*40)
+					traceback.print_exc()
+					print('='*40)
 			except Exception as e:
 				print('Error occurs in the message loop...')
-				print(e)
+				print('='*40)
+				traceback.print_exc()
+				print('='*40)
 				time.sleep(3)
 
 def notify():

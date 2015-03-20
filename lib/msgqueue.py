@@ -35,8 +35,11 @@ def dispatcher(workerFunc):
 				s.commit()
 				if msg is None:
 					s.close()
-					conn, addr = sock.accept()
-					conn.close()
+					try:
+						conn, addr = sock.accept()
+						conn.close()
+					except KeyboardInterrupt:
+						return
 					continue
 				worker = workerFunc.get(msg.getTypeName(s))
 				try:

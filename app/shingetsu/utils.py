@@ -6,6 +6,8 @@ from datetime import datetime
 from binascii import *
 from urllib.request import urlopen
 from core import settings
+import logging
+log = logging.getLogger(__name__)
 
 def splitFileName(fname):
 	return fname.split('_', 2)
@@ -35,6 +37,7 @@ def getTimeRange(atime, starttime, endtime):
 		raise 'ERROR'
 
 def httpGet(http_addr):
+	log.debug('HTTP_GET '+http_addr)
 	with urlopen(http_addr, timeout=settings.HTTP_TIMEOUT) as httpsock:
 		return httpsock.read()
 

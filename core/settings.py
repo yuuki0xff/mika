@@ -98,6 +98,12 @@ STATIC_URL = '/static/'
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': True,
+    'formatters': {
+        'standard': {
+            'format' : "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
+            'datefmt' : "%Y/%m/%d %H:%M:%S"
+        },
+    },
     'handlers': {
         'null': {
             'level':'DEBUG',
@@ -106,6 +112,7 @@ LOGGING = {
         'console':{
             'level':'DEBUG',
             'class':'logging.StreamHandler',
+            'formatter': 'standard',
         },
         'logfile': {
             'level':'DEBUG',
@@ -113,6 +120,7 @@ LOGGING = {
             'filename': _ROOT_DIR + "/logfile",
             'maxBytes': 50000,
             'backupCount': 2,
+            'formatter': 'standard',
         },
     },
     'loggers': {

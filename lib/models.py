@@ -3,6 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.orm.session import Session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
+from binascii import *
 
 engine = create_engine('mysql+mysqlconnector://root:root@localhost/mika', echo=False)
 Base = declarative_base()

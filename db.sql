@@ -1,5 +1,5 @@
 
--- version: 0.0.3
+-- version: 0.0.4
 DROP DATABASE IF EXISTS mika;
 CREATE DATABASE mika;
 USE mika;
@@ -9,7 +9,7 @@ CREATE TABLE SYSTEM(
 	value VARCHAR(255),
 	PRIMARY KEY(id)
 );
-INSERT INTO SYSTEM(id, value) VALUES('version', '0.0.3');
+INSERT INTO SYSTEM(id, value) VALUES('version', '0.0.4');
 
 CREATE TABLE thread(
 	-- titleのサイズは適当

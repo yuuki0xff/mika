@@ -23,6 +23,7 @@ CREATE TABLE thread(
 );
 
 CREATE TABLE record(
+	record_id INT UNSIGNED AUTO_INCREMENT,
 	thread_id INT UNSIGNED,
 	timestamp TIMESTAMP,
 	bin_id BINARY(16),
@@ -44,7 +45,8 @@ CREATE TABLE record(
 	target CHAR(64),
 	-- raw
 	raw_body MEDIUMTEXT NOT NULL,
-	PRIMARY KEY(thread_id, timestamp, bin_id),
+	PRIMARY KEY(record_id),
+	UNIQUE(thread_id, timestamp, bin_id),
 	FOREIGN KEY(thread_id) REFERENCES thread(id)
 );
 CREATE TABLE record_removed(

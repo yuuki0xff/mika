@@ -35,11 +35,13 @@ def getRecord(msg):
 		return False
 	return True
 
-def _updateRecord_httpGetWrapper(url):
+def _updateRecord_httpGetWrapper(host, fname, time, hex_id, thread_id):
 	try:
+		url = 'http://{}/update/{}/{}/{}/'.format(host, fname, time, hex_id,)
 		httpGet(url)
 		return True
-	except URLError:
+	except URLError as e:
+		log.info('updateRecord[Fail] {}/{}/{} {} {}'.format(thread_id, time, hex_id, host, str(e),))
 		return False
 
 def updateRecord(msg):
@@ -51,12 +53,14 @@ def updateRecord(msg):
 	filename = Thread.getFileName(Thread.get(s, id=thread_id).value(Thread.title))
 
 	if Record.get(s, thread_id, bin_id, atime).value(Record.record_id) is None:
+		log.info('updateRecord[NOP] {}/{}/{} {}'.format(thread_id, atime, hex_id, addr))
 		return False
 
 	queue = Queue()
 	for host in Node.getLinkedNode(s).values(Node.host):
-		http_addr = 'http://{}/update/{}/{}/{}/'.format(host.host, filename, atime, hex_id)
-		queue.put((http_addr,))
+		queue.put((
+			host.host, filename, atime, hex_id, thread_id,
+			))
 	multiThread(_updateRecord_httpGetWrapper, queue, maxWorkers=settings.MAX_CONNECTIONS)
 	return True
 

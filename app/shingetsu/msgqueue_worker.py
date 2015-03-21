@@ -29,7 +29,7 @@ def getRecord(msg):
 			if Record.get(s, thread_id, bin_id, timestamp).first():
 				continue
 			Record.add(s, thread_id, timestamp, bin_id, body)
-			log.info('getRecord[ADD] {}/{}/{} {}'.format(thread_id, timestamp, b2a_hex(bin_id), addr))
+			log.info('getRecord[Add] {}/{}/{} {}'.format(thread_id, timestamp, b2a_hex(bin_id), addr))
 		s.commit()
 	except URLError as e:
 		log.info('getRecord[Fail] {}/{}/{} {} {}'.format(thread_id, atime, hex_id, addr, str(e)))
@@ -40,6 +40,7 @@ def _updateRecord_httpGetWrapper(host, fname, time, hex_id, thread_id):
 	try:
 		url = 'http://{}/update/{}/{}/{}/'.format(host, fname, time, hex_id,)
 		httpGet(url)
+		log.info('updateRecord[Done] {}/{}/{} {} {}'.format(thread_id, time, hex_id, host, str(e),))
 		return True
 	except URLError as e:
 		log.info('updateRecord[Fail] {}/{}/{} {} {}'.format(thread_id, time, hex_id, host, str(e),))
@@ -57,6 +58,7 @@ def updateRecord(msg):
 		log.info('updateRecord[NOP] {}/{}/{} {}'.format(thread_id, atime, hex_id, addr))
 		return False
 
+	log.info('updateRecord[Run] {}/{}/{}'.format(thread_id, atime, hex_id,))
 	queue = Queue()
 	for host in Node.getLinkedNode(s).values(Node.host):
 		queue.put((

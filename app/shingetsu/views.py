@@ -33,9 +33,9 @@ class node(View):
 
 class join(View):
 	def dispatch(self, request, *args, **kwargs):
-		addr = request.META['REMOTE_ADDR']
-		if kwargs['node']:
-			addr = kwargs['node']
+		addr = kwargs['node'].replace('+', '/')
+		if addr.startswith(':') or addr.startswith('/'):
+			addr = request.META['REMOTE_ADDR'] + addr
 		response = HttpResponse()
 		s = Session()
 		thisNode = Node.getThisNode(s, addr).first()
@@ -61,9 +61,9 @@ class join(View):
 
 class bye(View):
 	def dispatch(self, request, *args, **kwargs):
-		addr = request.META['REMOTE_ADDR']
-		if kwargs['node']:
-			addr = kwargs['node']
+		addr = kwargs['node'].replace('+', '/')
+		if addr.startswith(':') or addr.startswith('/'):
+			addr = request.META['REMOTE_ADDR'] + addr
 		response = HttpResponse()
 		s = Session()
 		thisNode = Node.getThisNode(s, addr).first()
@@ -128,9 +128,9 @@ class update(View):
 		title = a2b_hex(basename)
 		atime = int(kwargs['time'])
 		id_hex = kwargs['id']
-		addr = request.META['REMOTE_ADDR']
-		if kwargs['node']:
-			addr = kwargs['node']
+		addr = kwargs['node'].replace('+', '/')
+		if addr.startswith(':') or addr.startswith('/'):
+			addr = request.META['REMOTE_ADDR'] + addr
 		response = HttpResponse()
 		if prefix=='thread':
 			s = Session()

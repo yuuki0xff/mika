@@ -11,12 +11,12 @@ _time_id = '({}(/{})?|{})'.format(_time, _id, _timeRange)
 urlpatterns = patterns('',
 	url(r'^ping$', ping.as_view()),
 	url(r'^node$', node.as_view()),
-	url(r'^join/'+_node+'?$', join.as_view()),
-	url(r'^bye/'+_node+'?$',  bye.as_view()),
+	url(r'^join/'+_node+'$', join.as_view()),
+	url(r'^bye/'+_node+'$',  bye.as_view()),
 	url(r'^have/'+_file+'$', have.as_view()),
 	url(r'^get/'+_file+'/'+_time_id+'$', get.as_view()),
 	url(r'^head/'+_file+'/'+_time_id+'$', head.as_view()),
-	url(r'^update/'+_file+'/'+_time+'/'+_id+'/('+_node+')?$', update.as_view()),
+	url(r'^update/'+_file+'/'+_time+'/'+_id+'/('+_node+')$', update.as_view()),
 	url(r'^recent/'+_time+'$', 'recent'),
 )
 

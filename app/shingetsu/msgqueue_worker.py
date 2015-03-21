@@ -4,6 +4,8 @@ from lib.msgqueue import *
 from urllib.error import *
 from binascii import *
 from queue import Queue
+import logging
+log = logging.getLogger(__name__)
 
 def getRecord(msg):
 	s = Session()
@@ -13,6 +15,7 @@ def getRecord(msg):
 	atime = int(atime)
 
 	if Record.get(s, thread_id, bin_id, atime).value(Record.record_id):
+		log.info('getRecord[NOP] {}/{}/{} {}'.format(thread_id, atime, hex_id, addr))
 		return True
 
 	title = Thread.get(s, id=thread_id).value(Thread.title)
@@ -25,8 +28,10 @@ def getRecord(msg):
 			if Record.get(s, thread_id, bin_id, record[0]).first():
 				continue
 			Record.add(s, thread_id, timestamp, bin_id, body)
+			log.info('getRecord[ADD] {}/{}/{} {}'.format(thread_id, timestamp, b2a_hex(bin_id), addr))
 		s.commit()
 	except URLError as e:
+		log.info('getRecord[Fail] {}/{}/{} {} {}'.format(thread_id, atime, hex_id, addr, str(e)))
 		return False
 	return True
 

@@ -25,7 +25,8 @@ def getRecord(msg):
 		for record in str2recordInfo(thread_id, httpGet(http_addr)):
 			timestamp, hex_id, body = record
 			bin_id = a2b_hex(hex_id)
-			if Record.get(s, thread_id, bin_id, record[0]).first():
+			timestamp = int(timestamp)
+			if Record.get(s, thread_id, bin_id, timestamp).first():
 				continue
 			Record.add(s, thread_id, timestamp, bin_id, body)
 			log.info('getRecord[ADD] {}/{}/{} {}'.format(thread_id, timestamp, b2a_hex(bin_id), addr))

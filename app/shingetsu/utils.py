@@ -4,7 +4,9 @@ import time
 # from base64 import b64encode, b64decode
 from datetime import datetime
 from binascii import *
-from urllib.request import urlopen
+from urllib.request import urlopen, Request
+import io
+import gzip
 from core import settings
 import logging
 log = logging.getLogger(__name__)
@@ -44,8 +46,12 @@ def getTimeRange(atime, starttime, endtime):
 
 def httpGet(http_addr):
 	log.debug('HTTP_GET '+http_addr)
-	with urlopen(http_addr, timeout=settings.HTTP_TIMEOUT) as httpsock:
-		return httpsock.read()
+	request = Request(http_addr)
+	request.add_header('Accept-encoding', 'gzip')
+	with urlopen(request, timeout=settings.HTTP_TIMEOUT) as httpsock:
+		bi = io.BytesIO(httpsock.read())
+		text = gzip.GzipFile(fileobj=bi, mode='rb')
+		return text.read().decode('utf-8')
 
 def str2recordInfo(thread_id, string):
 	for record in string.splitlines():

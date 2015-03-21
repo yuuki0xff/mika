@@ -5,6 +5,8 @@ import socket
 import time
 import os
 import traceback
+import logging
+log = logging.getLogger(__name__)
 
 def _multiThreadWorker(worker, queue):
 	while not queue.empty():
@@ -48,15 +50,15 @@ def dispatcher(workerFunc):
 				try:
 					worker(msg)
 				except Exception as e:
-					print('Worker died.')
-					print('='*40)
-					traceback.print_exc()
-					print('='*40)
+					log.error(''.join([
+						'Worker died.',
+						traceback.format_exc(),
+						]))
 			except Exception as e:
-				print('Error occurs in the message loop...')
-				print('='*40)
-				traceback.print_exc()
-				print('='*40)
+				log.critical('\n'.join([
+					'Error occurs in the message loop...',
+					traceback.format_exc(),
+					]))
 				time.sleep(3)
 
 def notify():

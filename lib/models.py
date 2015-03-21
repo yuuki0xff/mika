@@ -60,6 +60,33 @@ class Record(Base):
 					cls.bin_id == bin_id,
 					cls.timestamp == datetime.fromtimestamp(timestamp)
 					)
+	@classmethod
+	def add(cls, session, thread_id, timestamp, bin_id, body):
+		fields = {}
+		for i in body.split('<>'):
+			fieldName, fieldValue = i.split(':', 1)
+			fields[fieldName] = fieldValue
+
+		rec = Record()
+		rec.thread_id = thread_id
+		rec.bin_id = bin_id
+		rec.timestamp = datetime.fromtimestamp(timestamp)
+		rec.raw_body = body
+		rec.name = fields.get('name', '')
+		rec.mail = fields.get('mail', '')
+		rec.body = fields.get('body', '')
+		if 'remove_id' in fields:
+			rec.remove_id = fields.get('remove_id')
+			rec.remove_stamp = fields.get('remove_stamp')
+		if 'attach' in fields:
+			rec.attach = a2b_hex(fields['attach'])
+			rec.suffix = fields['suffix']
+		if 'pubkey' in fields:
+			rec.pubkey = fields.get('pubkey')
+			rec.sign = fields.get('sign')
+			rec.target = fields.get('target')
+
+		session.add(rec)
 
 class Tagname(Base):
 	__tablename__ = 'tagname'

@@ -1,5 +1,5 @@
 
--- version: 0.0.4
+-- version: 0.0.5
 DROP DATABASE IF EXISTS mika;
 CREATE DATABASE mika;
 USE mika;
@@ -9,7 +9,7 @@ CREATE TABLE SYSTEM(
 	value VARCHAR(255),
 	PRIMARY KEY(id)
 );
-INSERT INTO SYSTEM(id, value) VALUES('version', '0.0.4');
+INSERT INTO SYSTEM(id, value) VALUES('version', '0.0.5');
 
 CREATE TABLE thread(
 	-- titleのサイズは適当
@@ -64,7 +64,9 @@ CREATE TABLE tagname(
 CREATE TABLE tag(
 	tag_id INT UNSIGNED,
 	thread_id INT UNSIGNED,
-	PRIMARY KEY(tag_id, thread_id)
+	PRIMARY KEY(thread_id, tag_id),
+	FOREIGN KEY(thread_id) REFERENCES thread(id),
+	FOREIGN KEY(tag_id) REFERENCES tagname(id)
 );
 
 CREATE TABLE node(

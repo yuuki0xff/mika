@@ -1,9 +1,11 @@
 from sqlalchemy import create_engine
 from sqlalchemy import select
+import sqlalchemy.sql.expression as sql_func
 from sqlalchemy.orm.session import Session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 from binascii import *
+from utils import *
 
 engine = create_engine('mysql+mysqlconnector://root:root@localhost/mika', echo=False)
 Base = declarative_base()
@@ -36,6 +38,30 @@ class Thread(Base):
 	@classmethod
 	def getFileName(cls, title):
 		return 'thread_' + b2a_hex(title.encode('utf-8')).decode('utf-8')
+	@classmethod
+	def gets(cls, session, **kwargs):
+		query = session.query(cls)
+		if 'time' in kwargs:
+			atime = kwargs['time']
+			query = query.filter(cls.timestamp == timestamp2str(atime))
+		if 'stime' in kwargs:
+			stime = kwargs['stime']
+			if stime == 0:
+				exp = sql_func.or_(
+						cls.timestamp >= timestamp2str(1),
+						cls.timestamp == timestamp2str(stime),
+						)
+			else:
+				exp = cls.timestamp >= timestamp2str(stime)
+			query = query.filter(exp)
+		if 'etime' in kwargs:
+			etime = kwargs['etime']
+			if etime == 0:
+				exp = cls.timestamp == timestamp2str(etime)
+			else:
+				exp = cls.timestamp <= timestamp2str(etime)
+			query = query.filter(exp)
+		return query
 
 class Record(Base):
 	__tablename__ = 'record'

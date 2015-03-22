@@ -50,6 +50,8 @@ class Record(Base):
 				stime = 1
 			allRecords = allRecords.filter(Record.timestamp >= datetime.fromtimestamp(stime))
 		if etime is not None:
+			if etime == 0:
+				etime = 1
 			allRecords = allRecords.filter(Record.timestamp <= datetime.fromtimestamp(etime))
 		return allRecords
 	@classmethod

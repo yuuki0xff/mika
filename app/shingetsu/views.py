@@ -6,6 +6,7 @@ from lib.models import *
 from shingetsu.utils import *
 from shingetsu import msgqueue_worker
 from binascii import *
+from utils import *
 
 __all__ = 'ping node join bye have get head update recent'.split()
 
@@ -141,4 +142,31 @@ class update(View):
 		return response
 
 class recent(View):
-	pass
+	def dispatch(self, request, *args, **kwargs):
+		response = HttpResponse()
+		s = Session()
+		if kwargs.get('time') is not None:
+			query = Thread.gets(s, time=int(kwargs['time']))
+		else:
+			args = {}
+			args['stime'] = 0
+			if kwargs.get('stime') is not None:
+				args['stime'] = int(kwargs['stime'])
+			if kwargs.get('etime') is not None:
+				args['etime'] = int(kwargs['etime'])
+			query = Thread.gets(s, **args)
+		for thread_id, stamp, title in query.values(Thread.id, Thread.timestamp, Thread.title):
+			id = 'thread'
+			fname = Thread.getFileName(title)
+			tags = []
+			for tag in s.query(Tagname.name).filter(
+					Tag.thread_id==thread_id,
+					Tag.tag_id==Tagname.id
+					):
+				tags.append(tag)
+			line = '<>'.join([
+				str(datetime2timestamp(stamp)), id, fname,
+				] + tags)+'\n'
+			response.write(line)
+		return response
+

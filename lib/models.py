@@ -70,7 +70,7 @@ class Record(Base):
 	__table_args__ = {'autoload': True}
 
 	@classmethod
-	def gets(cls, session, thread_id, stime, etime):
+	def gets(cls, session, thread_id, stime=None, etime=None, bin_id=None):
 		allRecords = session.query(Record).filter(Record.thread_id == thread_id)
 		if stime is not None:
 			Record.timestamp >= datetime.fromtimestamp(stime)
@@ -81,6 +81,8 @@ class Record(Base):
 			if etime == 0:
 				etime = 1
 			allRecords = allRecords.filter(Record.timestamp <= datetime.fromtimestamp(etime))
+		if bin_id is not None:
+			allRecords = allRecords.filter(Record.bin_id == bin_id)
 		return allRecords
 	@classmethod
 	def get(cls, session, thread_id, bin_id, timestamp):

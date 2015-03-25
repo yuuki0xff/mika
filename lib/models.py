@@ -61,6 +61,8 @@ class Thread(Base):
 			else:
 				exp = cls.timestamp <= timestamp2str(etime)
 			query = query.filter(exp)
+		if 'title' in kwargs:
+			query = query.filter(Thread.title == kwargs['title'])
 		return query
 
 class Record(Base):

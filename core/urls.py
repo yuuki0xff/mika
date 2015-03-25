@@ -7,6 +7,6 @@ urlpatterns = patterns('',
     # url(r'^blog/', include('blog.urls')),
 
 #     url(r'^admin/', include(admin.site.urls)),
-	url(r'^shingetsu/', include('shingetsu.urls')),
+	url(r'^server_api/', include('shingetsu.urls')),
 )
 

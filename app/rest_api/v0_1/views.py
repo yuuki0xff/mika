@@ -83,6 +83,30 @@ class records(View):
 		return HttpResponseNotFound()
 
 class attach(View):
-	pass
+	def get(self, request, *args, **kwargs):
+		s = Session()
+		try:
+			thread_id = int(kwargs['thread_id'])
+			bin_id = a2b_hex(kwargs['record_id'])
+			timestamp = int(kwargs['timestamp'])
+		except KeyError:
+			return HttpResponseBadRequest()
+		attach = Record.get(s, thread_id, bin_id, timestamp).with_entities(Record.attach).first().attach
+		if attach:
+			return HttpResponse(attach)
+		return HttpResponseNotFound()
+	def head(self, request, *args, **kwargs):
+		s = Session()
+		try:
+			thread_id = int(kwargs['thread_id'])
+			bin_id = a2b_hex(kwargs['record_id'])
+			timestamp = int(kwargs['timestamp'])
+		except KeyError:
+			return HttpResponseBadRequest()
+		if Record.get(s, thread_id, bin_id, timestamp).filter(
+				Record.attach is not None
+				).first().bin_id:
+			return HttpResponse()
+		return HttpResponseNotFound(l )
 
 

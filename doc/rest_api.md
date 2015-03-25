@@ -77,11 +77,11 @@ timestamp           | 必須  | TIMESTAM          | 書き込み時刻を表す�
 ```
 RECORD\_INFOにname,mail,body,attachを追加した型である。
 
-API.version
+API.versions
 -----------
 利用可能なAPIのバージョンのリストを返す。
 ### リクエスト
-`GET /api/version`
+`GET /api/versions`
 ### レスポンス
 ```json
 {

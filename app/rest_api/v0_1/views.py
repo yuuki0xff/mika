@@ -45,27 +45,50 @@ class records(View):
 		limit = int(request.GET.get('limit', -1))
 
 		thread_id = int(kwargs['thread_id'])
-		stime = etime = bin_id = None
-		if 'start_time' in request.GET:  stime = int(request.GET.get('start_time'))
-		if 'end_time' in request.GET:  etime = int(request.GET.get('end_time'))
-		if 'id' in request.GET:  bin_id = a2b_hex(kwargs['record_id'])
+		if 'timestamp' in kwargs:
+			""" 単一のレコードを返す方のAPI """
+			timestamp = int(kwargs['timestamp'])
+			bin_id = a2b_hex(kwargs['record_id'])
 
-		matchRecords = Record.gets(s, thread_id, stime, etime, bin_id).with_entities(
-				Record.bin_id,
-				Record.timestamp,
-				Record.name,
-				Record.mail,
-				Record.body,
-				sql_func.length(Record.attach).label('attach_len'))
-		for r in matchRecords:
-			records.append({
-				'id': b2a_hex(r.bin_id).decode('ascii'),
-				'timestamp': int(datetime2timestamp(r.timestamp)),
-				'name': r.name,
-				'mail': r.mail,
-				'body': r.body,
-				'attach': r.attach_len,
-				})
+			r = Record.get(s, thread_id, bin_id, timestamp).with_entities(
+					Record.bin_id,
+					Record.timestamp,
+					Record.name,
+					Record.mail,
+					Record.body,
+					sql_func.length(Record.attach).label('attach_len')).first()
+			if r:
+				records.append({
+					'id': b2a_hex(r.bin_id).decode('ascii'),
+					'timestamp': int(datetime2timestamp(r.timestamp)),
+					'name': r.name,
+					'mail': r.mail,
+					'body': r.body,
+					'attach': bool(r.attach_len),
+					})
+		else:
+			""" 複数のレコードを返す方のAPI """
+			stime = etime = bin_id = None
+			if 'start_time' in request.GET:  stime = int(request.GET.get('start_time'))
+			if 'end_time' in request.GET:  etime = int(request.GET.get('end_time'))
+			if 'id' in request.GET:  bin_id = a2b_hex(kwargs['record_id'])
+
+			matchRecords = Record.gets(s, thread_id, stime, etime, bin_id).with_entities(
+					Record.bin_id,
+					Record.timestamp,
+					Record.name,
+					Record.mail,
+					Record.body,
+					sql_func.length(Record.attach).label('attach_len'))
+			for r in matchRecords:
+				records.append({
+					'id': b2a_hex(r.bin_id).decode('ascii'),
+					'timestamp': int(datetime2timestamp(r.timestamp)),
+					'name': r.name,
+					'mail': r.mail,
+					'body': r.body,
+					'attach': bool(r.attach_len),
+					})
 		obj = {
 				'records': records,
 				}

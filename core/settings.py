@@ -49,6 +49,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'shingetsu',
     'msgqueued',
+    'rest_api',
 )
 
 MIDDLEWARE_CLASSES = (

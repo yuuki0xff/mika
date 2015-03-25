@@ -8,5 +8,6 @@ urlpatterns = patterns('',
 
 #     url(r'^admin/', include(admin.site.urls)),
 	url(r'^server_api/', include('shingetsu.urls')),
+	url(r'^api/', include('rest_api.urls')),
 )
 

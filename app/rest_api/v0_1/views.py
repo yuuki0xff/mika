@@ -3,6 +3,8 @@ from django.views.generic import View
 from django.http import JsonResponse, HttpResponse, HttpResponseNotFound
 from lib.models import *
 from lib.utils import *
+from sqlalchemy.sql import func as sql_func
+from binascii import *
 
 class threads(View):
 	def get(self, request, *args, **kwargs):
@@ -37,7 +39,48 @@ class threads(View):
 		return HttpResponseNotFound()
 
 class records(View):
-	pass
+	def get(self, request, *args, **kwargs):
+		s = Session()
+		records = []
+		limit = int(request.GET.get('limit', -1))
+
+		thread_id = int(kwargs['thread_id'])
+		stime = etime = bin_id = None
+		if 'start_time' in request.GET:  stime = int(request.GET.get('start_time'))
+		if 'end_time' in request.GET:  etime = int(request.GET.get('end_time'))
+		if 'id' in request.GET:  bin_id = a2b_hex(kwargs['record_id'])
+
+		matchRecords = Record.gets(s, thread_id, stime, etime, bin_id).with_entities(
+				Record.bin_id,
+				Record.timestamp,
+				Record.name,
+				Record.mail,
+				Record.body,
+				sql_func.length(Record.attach).label('attach_len'))
+		for r in matchRecords:
+			records.append({
+				'id': b2a_hex(r.bin_id).decode('ascii'),
+				'timestamp': int(datetime2timestamp(r.timestamp)),
+				'name': r.name,
+				'mail': r.mail,
+				'body': r.body,
+				'attach': r.attach_len,
+				})
+		obj = {
+				'records': records,
+				}
+		return JsonResponse(obj)
+	def head(self, request, *args, **kwargs):
+		s = Session()
+		try:
+			thread_id = int(kwargs['thread_id'])
+			bin_id = a2b_hex(kwargs['record_id'])
+			timestamp = int(kwargs['timestamp'])
+		except KeyError:
+			return HttpResponseBadRequest()
+		if Record.get(s, thread_id, bin_id, timestamp).with_entities(Record.bin_id).first():
+			return HttpResponse()
+		return HttpResponseNotFound()
 
 class attach(View):
 	pass

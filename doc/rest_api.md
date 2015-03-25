@@ -117,7 +117,6 @@ API.threads.head
 ----------------
 指定したスレッドが存在するかどうかを返す
 ### リクエスト
-`HEAD /api/v0.1/threads/<thread_id>`
 `HEAD /api/v0.1/threads?title=<title>`
 ### レスポンス
 本文は無い。

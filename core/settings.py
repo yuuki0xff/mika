@@ -125,14 +125,6 @@ LOGGING = {
             'class':'logging.StreamHandler',
             'formatter': 'standard',
         },
-        'logfile': {
-            'level':'DEBUG',
-            'class':'logging.handlers.RotatingFileHandler',
-            'filename': _ROOT_DIR + "/logfile",
-            'maxBytes': 50000,
-            'backupCount': 2,
-            'formatter': 'standard',
-        },
     },
     'loggers': {
         'django': {

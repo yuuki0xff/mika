@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 import sys
-_ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
+_ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.extend([
 	_ROOT_DIR,
 	_ROOT_DIR+'/app',

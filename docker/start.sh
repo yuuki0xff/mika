@@ -19,6 +19,7 @@ MIKA_CID=$(echo MIKA_DB_AUTH=root:${MYSQL_ROOT_PASSWORD} |
 	docker run -dt \
 		-v $ROOT_DIR:/srv:ro \
 		--link $MYSQL_CID:mysql \
+		-e MIKA_DB_TYPE='mysql+mysqlconnector' \
 		-e MIKA_DB_NAME=mika \
 		--env-file /dev/stdin \
 		$DOCKER_MIKA | cut -c1-12
@@ -29,4 +30,8 @@ NGINX_CID=$(docker run -dt \
 	-p 0.0.0.0:80:80 \
 	$DOCKER_NGINX | cut -c1-12
 )
+
+sleep 10
+docker exec -i $MYSQL_CID mysql -uroot -p$MYSQL_ROOT_PASSWORD <$ROOT_DIR/db.sql
+echo MySQL Password: $MYSQL_ROOT_PASSWORD
 

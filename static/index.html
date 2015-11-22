@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<meta charset='utf-8' />
+<link rel='stylesheet' type='text/css' href='./index.css' />
+
+<div class='mika' ng-app='mika' ng-controller='MikaCtrl'>
+	<div class='sidebar_button active'>≡</div>
+	<div class='sidebar_overlay'></div>
+	<div class='sidebar' ng-controller='MenuCtrl'>
+		<ul class='tab'>
+			<li ng-click='setMenuViewType(MenuViewType.thread)' ng-class='menuView == MenuViewType.thread && "selected"'>
+				<a href=''>Threads</a>
+			</li>
+			<li ng-click='setMenuViewType(MenuViewType.tag)' ng-class='menuView == MenuViewType.tag && "selected"'>
+				<a href=''>Tags</a>
+			</li>
+		</ul>
+
+		<ul class='thread list' tab_content='thread' ng-class='menuView == MenuViewType.thread && "active"'>
+			<li ng-class='mainView == MainViewType.newThread && "selected"'>
+				<a href='' ng-click='switchMainView(MainViewType.newThread)'>New Thread</a>
+			</li>
+			<li ng-repeat='thread in threads' thread_name='{{thread.title}}' ng-class='thread.thread_id == currentThread.thread_id && "selected"'>
+				<a href='' ng-click='setCurrentThread(thread)'>{{thread.title}}</a>
+			</li>
+		</ul>
+
+		<ul class='tag list' tag_content='tag' ng-class='menuView == MenuViewType.tag && "active"'>
+			<li ng-repeat='tag in tags' tag_name='{{tag.name}}'>
+				<a href=''>{{tag.name}}</a>
+			</li>
+		</ul>
+	</div>
+
+	<div class='main'>
+		<div class='new_thread_view post' ng-controller='ThreadCtrl' ng-class='mainView == MainViewType.newThread && "active"'>
+			<form action='#'>
+				スレッド名 : <input name='thread_name' />
+				<input value='表示' type='submit' />
+			</form>
+		</div>
+
+		<div class='thread_view' ng-controller='ThreadCtrl' ng-class='mainView == MainViewType.thread && "active"'>
+			<h1 class='title'>{{currentThread.title}}</h1>
+			<div class='record_list'>
+				<div ng-repeat='record in currentThread.recordList'>
+					<div class='header'>
+						<span class='id'>{{record.id}}</span>
+						<span class='name'>{{record.name}}</span>
+						[<span class='mail'>{{record.mail}}</span>]
+						<span class='datetime'>{{record.timestamp * 1000 | date:'yyyy-MM-dd HH:mm:ss'}}</span>
+					</div>
+					<p class='body'>{{record.body}}</p>
+				</div>
+			</div>
+			<div class='post'>
+				<form action='#'>
+					名前 : <input name='name' />
+					メール : <input name='mail' />
+					<input type='submit' value='投稿' />
+					<textarea name='body'></textarea>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<script src='https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.8/angular.min.js'></script>
+	<script src='./index.js'></script>
+</div>
+</html>
+

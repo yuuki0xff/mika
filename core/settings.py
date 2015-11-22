@@ -11,13 +11,23 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 import sys
-_ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
+_ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.extend([
 	_ROOT_DIR,
 	_ROOT_DIR+'/app',
 	_ROOT_DIR+'/lib',
 	_ROOT_DIR+'/require'])
 
+if all((x in os.environ) for x in ['MIKA_DB_TYPE', 'MIKA_DB_AUTH', 'MIKA_DB_ADDR', 'MIKA_DB_NAME',]):
+	DB_ADDRESS = '{}://{}@{}/{}'.format(
+			os.environ['MIKA_DB_TYPE'],
+			os.environ['MIKA_DB_AUTH'],
+			os.environ['MIKA_DB_ADDR'],
+			os.environ['MIKA_DB_NAME'],
+			)
+else:
+	with open(_ROOT_DIR+'/core/db.address') as _fp:
+		DB_ADDRESS=_fp.read()
 
 MESSAGE_QUEUE_SOCK_FILE = "/run/mika.msgq.sock"
 MAX_THREADS = 16

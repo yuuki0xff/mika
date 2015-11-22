@@ -1,0 +1,7 @@
+
+static/.*
+static/*.css
+static/*.js
+static/*.map
+static/typings/
+

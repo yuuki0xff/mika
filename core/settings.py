@@ -18,6 +18,16 @@ sys.path.extend([
 	_ROOT_DIR+'/lib',
 	_ROOT_DIR+'/require'])
 
+if all((x in os.environ) for x in ['MIKA_DB_TYPE', 'MIKA_DB_AUTH', 'MIKA_DB_ADDR', 'MIKA_DB_NAME',]):
+	DB_ADDRESS = '{}://{}@{}/{}'.format(
+			os.environ['MIKA_DB_TYPE'],
+			os.environ['MIKA_DB_AUTH'],
+			os.environ['MIKA_DB_ADDR'],
+			os.environ['MIKA_DB_NAME'],
+			)
+else:
+	with open(_ROOT_DIR+'/core/db.address') as _fp:
+		DB_ADDRESS=_fp.read()
 
 MESSAGE_QUEUE_SOCK_FILE = "/run/mika.msgq.sock"
 MAX_THREADS = 16

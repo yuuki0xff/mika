@@ -6,8 +6,9 @@ from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 from binascii import *
 from utils import *
+from core import settings
 
-engine = create_engine('mysql+mysqlconnector://root:root@localhost/mika', echo=False)
+engine = create_engine(settings.DB_ADDRESS, echo=False)
 Base = declarative_base()
 Session = sessionmaker(bind=engine)
 Base.metadata.bind = engine

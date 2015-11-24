@@ -1,12 +1,13 @@
 
 from lib.models import *
 import time
-# from base64 import b64encode, b64decode
+from base64 import b64encode, b64decode
 from datetime import datetime
 from binascii import *
 from urllib.request import urlopen, Request
 import io
 import gzip
+import hashlib
 from core import settings
 import logging
 log = logging.getLogger(__name__)
@@ -57,4 +58,30 @@ def str2recordInfo(string):
 	for record in string.splitlines():
 		# timestamp, bin_id_hex, body
 		yield record.split('<>', 2)
+
+def makeRecordStr(timestamp, name, mail, body, attach=None, suffix=None):
+	dic = {
+			'name': name,
+			'mail': mail,
+			'body': body,
+			}
+	if attach:
+		dic['attach'] = b64encode(attach)
+		dic['suffix'] = suffix
+
+	arr = []
+	for key in dic.keys():
+		val = str(dic[key]).replace('<', '&lt;').replace('>', '&gt;')
+		arr.append(str(key) +":"+ val)
+
+	record_body = '<>'.join(arr)
+	h = hashlib.md5()
+	h.update(record_body.encode('utf-8'))
+	record_id = h.digest()
+	record = "{}<>{}<>{}".format(
+			str(int(timestamp)),
+			record_id,
+			record_body
+			)
+	return record
 

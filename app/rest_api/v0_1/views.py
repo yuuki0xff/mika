@@ -147,6 +147,6 @@ class attach(View):
 				Record.attach is not None
 				).first().bin_id:
 			return HttpResponse()
-		return HttpResponseNotFound(l )
+		return HttpResponseNotFound()
 
 

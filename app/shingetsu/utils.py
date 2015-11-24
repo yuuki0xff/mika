@@ -53,7 +53,7 @@ def httpGet(http_addr):
 		text = gzip.GzipFile(fileobj=bi, mode='rb')
 		return text.read().decode('utf-8')
 
-def str2recordInfo(thread_id, string):
+def str2recordInfo(string):
 	for record in string.splitlines():
 		# timestamp, bin_id_hex, body
 		yield record.split('<>', 2)

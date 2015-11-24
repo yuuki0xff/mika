@@ -22,7 +22,7 @@ def getRecord(msg):
 	filename = Thread.getFileName(title)
 	http_addr = 'http://{}/get/{}/{}'.format(addr, filename, atime)
 	try:
-		for record in str2recordInfo(thread_id, httpGet(http_addr)):
+		for record in str2recordInfo(httpGet(http_addr)):
 			timestamp, hex_id, body = record
 			bin_id = a2b_hex(hex_id)
 			timestamp = int(timestamp)

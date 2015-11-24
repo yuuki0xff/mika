@@ -29,6 +29,12 @@ class Thread(Base):
 	__tablename__ = 'thread'
 	__table_args__ = {'autoload': True}
 	@classmethod
+	def add(cls, session, title):
+		thread = Thread()
+		thread.title = title
+		session.add(thread)
+		return thread
+	@classmethod
 	def get(cls, session, **kwargs):
 		query = session.query(cls)
 		if 'id' in kwargs:

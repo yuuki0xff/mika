@@ -37,6 +37,23 @@ class threads(View):
 				return HttpResponse()
 			break
 		return HttpResponseNotFound()
+	def post(self, request, *args, **kwargs):
+		s = Session()
+		title = request.POST['title']
+		query = Thread.get(s, title=title).all()
+		if len(query) == 0:
+			thread = Thread.add(s, title)
+		else:
+			thread = query[0]
+		s.commit()
+		return JsonResponse({
+			'thread': {
+				"id": thread.id,
+				"title": thread.title,
+				"timestamp": thread.timestamp,
+				"records": thread.records,
+				}
+			})
 
 class records(View):
 	def get(self, request, *args, **kwargs):

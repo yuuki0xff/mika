@@ -325,13 +325,28 @@ module Controllers{
 		"thread",
 	}
 
+	interface IScope{
+		MainViewType: any;
+		mainView: MainViewType;
+		MenuViewType: any;
+		menuView: MenuViewType;
+
+		threads: Models.IThreadList;
+		currentThread: Models.IThread;
+		tags: any[];
+
+		setCurrentThread(thread:Models.Thread): void;
+		switchMainView(viewType:MainViewType): void;
+		setMenuViewType(viewType:MenuViewType): void;
+	}
+
 	export class MikaCtrl{
-		constructor(private $scope:any){
+		constructor(private $scope:IScope){
 			$scope.MainViewType = MainViewType;
 			$scope.mainView = MainViewType.thread;
 
-			$scope.setCurrentThread = (thread)=>{this.setCurrentThread(thread);};
-			$scope.switchMainView = (viewType)=>{this.switchMainView(viewType);};
+			$scope.setCurrentThread = (thread:Models.Thread)=>{this.setCurrentThread(thread);};
+			$scope.switchMainView = (viewType:MainViewType)=>{this.switchMainView(viewType);};
 		}
 
 		setCurrentThread(thread){
@@ -347,14 +362,14 @@ module Controllers{
 	}
 
 	export class MenuCtrl{
-		constructor(private $scope:any){
+		constructor(private $scope:IScope){
 			$scope.MenuViewType = MenuViewType;
 			$scope.menuView = MenuViewType.thread;
 
-			$scope.setMenuViewType = (viewType)=>{this.setMenuViewType(viewType);};
+			$scope.setMenuViewType = (viewType:MenuViewType)=>{this.setMenuViewType(viewType);};
 		}
 
-		setMenuViewType(viewType){
+		setMenuViewType(viewType:MenuViewType){
 			this.$scope.menuView = viewType;
 		}
 	}

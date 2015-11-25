@@ -205,7 +205,9 @@ module Models{
 		thread_id:number;
 		records:Array<IRecord>;
 
-		constructor(public filter:Models.Filters.IRecordListFilter=undefined){}
+		constructor(thread:IThreadInfo, public filter:Models.Filters.IRecordListFilter=undefined){
+			this.thread_id = thread.thread_id;
+		}
 
 		private converter(json):Array<Record>{
 			var records = [];
@@ -216,6 +218,14 @@ module Models{
 		}
 		reload(callback:API.IAjaxCallback){
 			var opt = {};
+			var preCallback:API.IAjaxCallback = {
+				"success": (data)=>{
+					var rec = this.converter(data);
+					console.dir(rec);
+					callback.success(rec);
+				},
+				"error": callback.error,
+			};
 			if(this.filter){
 				for(var key in "limit id start_time end_time".split(" ")){
 					if(this.filter[key]){
@@ -223,7 +233,7 @@ module Models{
 					}
 				}
 			}
-			// TODO: サーバから取得してくる
+			API.Records.get(this, opt, preCallback);
 		}
 	}
 
@@ -263,20 +273,22 @@ module Models{
 
 		constructor(thread:IThreadInfo){
 			super(<IThreadInfo>thread);
+			this.recordList = new RecordList(this);
 		}
 
 		post(rec:IRecord, callback:API.IAjaxCallback){
 			API.Records.post(this.thread_id, rec, callback);
 		}
 		reload(callback:API.IAjaxCallback){
-			//API.Records.get() // TODO: 指定した時刻以内のレコードを取得する
+			this.recordList.reload(callback);
 		}
 		update(callback:API.IAjaxCallback){
 			var opt = {
 				"start_time": Math.max.apply(null, this.recordList.records),
 				"limit": 1000,
 			};
-			API.Records.get(<IThreadInfo>this, opt, callback);
+			// TODO:
+//             API.Records.get(<IThreadInfo>this, opt, callback);
 		}
 		get(filter:Models.Filters.IRecordListFilter):IRecordList{
 			return this.recordList;
@@ -291,7 +303,9 @@ module Models{
 		private converter(json):Array<IThread>{
 			var threads = [];
 			for(var i in json.threads){
-				threads.push(new Thread(json.threads[i]));
+				var th = json.threads[i];
+				th.thread_id = th.id;
+				threads.push(new Thread(th));
 			}
 			return threads;
 		}

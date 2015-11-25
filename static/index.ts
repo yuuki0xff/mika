@@ -55,7 +55,7 @@ module API{
 	}
 
 	export class Records{
-		static get(thread:Models.IThreadInfo, opt:any, callback:IAjaxCallback);
+		static get(thread:Models.IRecordList, opt:any, callback:IAjaxCallback);
 		static get(record:Models.IRecordInfo, opt:any, callback:IAjaxCallback);
 		static get(argv1:any, opt:any, callback:IAjaxCallback){
 			if(typeof argv1.record_id != "undefined"){
@@ -139,6 +139,7 @@ module Models{
 		thread_id:number;
 		records:Array<IRecord>;
 		filter:Models.Filters.IRecordListFilter;
+		reload(callback:API.IAjaxCallback);
 	}
 
 	export interface IThreadInfo{

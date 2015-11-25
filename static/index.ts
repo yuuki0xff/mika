@@ -325,7 +325,7 @@ module Controllers{
 		"thread",
 	}
 
-	interface IScope{
+	interface IScope extends angular.IScope{
 		MainViewType: any;
 		mainView: MainViewType;
 		MenuViewType: any;

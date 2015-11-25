@@ -332,37 +332,6 @@ module Controllers{
 
 			$scope.setCurrentThread = (thread)=>{this.setCurrentThread(thread);};
 			$scope.switchMainView = (viewType)=>{this.switchMainView(viewType);};
-
-			//////////////////////
-			// Generate test data.
-			//
-			$scope.threads = [];
-			for(var i=0; i<30; i++){
-				var th = {
-					"thread_id": i,
-					"title": "THREAD"+i+" TITLE",
-					"recordList": [],
-				};
-				for(var j=0; j<50; j++){
-					th.recordList.push({
-						"id": "abcdefgh",
-						"name": "anonymous",
-						"mail": "sage",
-						"body": "record"+i+","+j,
-						"attach": false,
-						"timestamp": 1448000000 + i*100000,
-					});
-				}
-				$scope.threads.push(th);
-			}
-			$scope.currentThread = $scope.threads[0];
-
-			$scope.tags = [];
-			for(var i=1; i<30; i++){
-				$scope.tags.push({
-					"name": "tag"+i,
-				});
-			}
 		}
 
 		setCurrentThread(thread){

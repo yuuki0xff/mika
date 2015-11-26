@@ -147,7 +147,7 @@ module Models{
 	}
 
 	export interface IThreadInfo{
-		thread_id:number;
+		id:number;
 		title:string;
 		timestamp:number; // 最終書き込み日時
 		recordCount:number;
@@ -209,7 +209,7 @@ module Models{
 		private records:Array<IRecord>;
 
 		constructor(thread:IThreadInfo, public filter:Models.Filters.IRecordListFilter=undefined){
-			this.thread_id = thread.thread_id;
+			this.thread_id = thread.id;
 		}
 
 		getAll(): IRecord[]{
@@ -247,13 +247,13 @@ module Models{
 	}
 
 	export class ThreadInfo implements IThreadInfo{
-		thread_id:number;
+		id:number;
 		title:string;
 		timestamp:number;
 		recordCount:number;
 
 		constructor(threadInfo:IThreadInfo){
-			this.thread_id = threadInfo.thread_id;
+			this.id = threadInfo.id;
 			this.title = threadInfo.title;
 			this.timestamp = threadInfo.timestamp;
 			this.recordCount = threadInfo.recordCount;
@@ -265,7 +265,7 @@ module Models{
 			};
 			var cb = {
 				success: (data)=>{
-					this.thread_id = data.threads[0].thread_id;
+					this.id = data.threads[0].id;
 					this.title = data.threads[0].title;
 					this.timestamp = data.threads[0].timestamp;
 					this.recordCount = data.threads[0].recordCount;
@@ -286,7 +286,7 @@ module Models{
 		}
 
 		post(rec:IRecord, callback:API.IAjaxCallback){
-			API.Records.post(this.thread_id, rec, callback);
+			API.Records.post(this.id, rec, callback);
 		}
 		reload(callback:API.IAjaxCallback){
 			this.recordList.reload(callback);
@@ -319,7 +319,6 @@ module Models{
 			var threads = [];
 			for(var i in json.threads){
 				var th = json.threads[i];
-				th.thread_id = th.id;
 				threads.push(new Thread(th));
 			}
 			return threads;

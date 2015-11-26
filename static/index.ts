@@ -63,7 +63,7 @@ module API{
 				var path = ["records", r.thread_id, r.timestamp, r.record_id].join("/");
 				ajax("get", path, opt, callback);
 			}else{
-				var t = <Models.IThreadInfo>argv1;
+				var t = <Models.IRecordList>argv1;
 				var path = ["records", t.thread_id].join("/");
 				ajax("get", path, opt, callback);
 			}

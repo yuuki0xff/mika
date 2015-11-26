@@ -122,6 +122,11 @@ module Models{
 	 * IThread
 	 * IThreadList
 	****************************************************************/
+	interface IList<t>{
+		getAll(): t[];
+		get(index:number): t;
+	}
+
 	export interface IRecordInfo{
 		thread_id:number;
 		record_id:string;
@@ -135,9 +140,8 @@ module Models{
 		attach:boolean;
 	}
 
-	export interface IRecordList{
+	export interface IRecordList extends IList<IRecord>{
 		thread_id:number;
-		records:Array<IRecord>;
 		filter:Models.Filters.IRecordListFilter;
 		reload(callback:API.IAjaxCallback);
 	}
@@ -158,9 +162,8 @@ module Models{
 		get(filter:Models.Filters.IRecordListFilter):IRecordList;
 	}
 
-	export interface IThreadList{
-		threads:Array<IThread>;
-		filter:Models.Filters.IThreadListFilter;
+	export interface IThreadList extends IList<IThread>{
+		reload(callback:API.IAjaxCallback);
 	}
 
 	/****************************************************************
@@ -203,12 +206,18 @@ module Models{
 
 	export class RecordList{
 		thread_id:number;
-		records:Array<IRecord>;
+		private records:Array<IRecord>;
 
 		constructor(thread:IThreadInfo, public filter:Models.Filters.IRecordListFilter=undefined){
 			this.thread_id = thread.thread_id;
 		}
 
+		getAll(): IRecord[]{
+			return this.records;
+		}
+		get(i:number): IRecord{
+			return this.records[i];
+		}
 		private converter(json):Array<Record>{
 			var records = [];
 			for(var i in json.records){
@@ -284,7 +293,6 @@ module Models{
 		}
 		update(callback:API.IAjaxCallback){
 			var opt = {
-				"start_time": Math.max.apply(null, this.recordList.records),
 				"limit": 1000,
 			};
 			// TODO:
@@ -296,9 +304,16 @@ module Models{
 	}
 
 	export class ThreadList implements IThreadList{
-		threads:Array<IThread> = [];
+		private threads:Array<IThread> = [];
 
 		constructor(public filter:Models.Filters.IThreadListFilter=undefined){}
+
+		getAll(): IThread[]{
+			return this.threads;
+		}
+		get(i:number): IThread{
+			return this.threads[i];
+		}
 
 		private converter(json):Array<IThread>{
 			var threads = [];

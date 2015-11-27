@@ -77,7 +77,7 @@ def makeRecordStr(timestamp, name, mail, body, attach=None, suffix=None):
 	record_body = '<>'.join(arr)
 	h = hashlib.md5()
 	h.update(record_body.encode('utf-8'))
-	record_id = h.digest()
+	record_id = h.hexdigest()
 	record = "{}<>{}<>{}".format(
 			str(int(timestamp)),
 			record_id,

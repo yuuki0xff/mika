@@ -5,6 +5,7 @@ from lib.models import *
 from lib.utils import *
 from sqlalchemy.sql import func as sql_func
 from binascii import *
+from app.shingetsu.utils import makeRecordStr, str2recordInfo
 
 class threads(View):
 	def get(self, request, *args, **kwargs):
@@ -121,6 +122,29 @@ class records(View):
 		if Record.get(s, thread_id, bin_id, timestamp).with_entities(Record.bin_id).first():
 			return HttpResponse()
 		return HttpResponseNotFound()
+	def post(self, request, *args, **kwargs):
+		s = Session()
+		try:
+			thread_id = int(kwargs['thread_id'])
+			name = request.POST['name']
+			mail = request.POST['mail']
+			body = request.POST['body']
+			try:
+				attach = request.POST['attach']
+				attach_sfx = request.POST['attach_sfx']
+			except KeyError:
+				attach = None
+				attach_sfx = None
+		except KeyError:
+			return HttpResponseBadRequest()
+
+		timestamp = time.time()
+		recStr = makeRecordStr(timestamp, name, mail, body, attach, attach_sfx)
+		_, bin_id_hex, body = tuple(str2recordInfo(recStr))[0]
+		bin_id = a2b_hex(bin_id_hex)
+		Record.add(s, thread_id, timestamp, bin_id, body)
+		s.commit()
+		return HttpResponse()
 
 class attach(View):
 	def get(self, request, *args, **kwargs):

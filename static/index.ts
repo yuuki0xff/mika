@@ -52,6 +52,11 @@ module API{
 				"title": title,
 			}, callback);
 		}
+		static post(title:string, callback:IAjaxCallback){
+			ajax("post", "threads", {
+				"title": title,
+			}, callback);
+		}
 	}
 
 	export class Records{
@@ -137,7 +142,7 @@ module Models{
 		name:string;
 		mail:string;
 		body:string;
-		attach:boolean;
+//         attach_sfx:boolean;
 	}
 
 	export interface IRecordList extends IList<IRecord>{
@@ -164,6 +169,7 @@ module Models{
 
 	export interface IThreadList extends IList<IThread>{
 		reload(callback:API.IAjaxCallback);
+		add(title:string, callback:API.IAjaxCallback);
 	}
 
 	/****************************************************************
@@ -230,7 +236,6 @@ module Models{
 			var preCallback:API.IAjaxCallback = {
 				"success": (data)=>{
 					var rec = this.converter(data);
-					console.dir(rec);
 					callback.success(rec);
 				},
 				"error": callback.error,
@@ -317,8 +322,13 @@ module Models{
 
 		private converter(json):Array<IThread>{
 			var threads = [];
-			for(var i in json.threads){
-				var th = json.threads[i];
+			if(json.threads){
+				for(var i in json.threads){
+					var th = json.threads[i];
+					threads.push(new Thread(th));
+				}
+			}else if(json.thread){
+					var th = json.thread;
 				threads.push(new Thread(th));
 			}
 			return threads;
@@ -340,6 +350,17 @@ module Models{
 				error: callback.error,
 			});
 		}
+		add(title:string, callback:API.IAjaxCallback){
+			var preCallback = <API.IAjaxCallback>{
+				"success": (json)=>{
+					var th = this.converter(json)[0];
+					this.threads.push(th);
+					return callback.success(th);
+				},
+				"error": callback.error,
+			};
+			API.Threads.post(title, preCallback);
+		}
 	}
 }
 
@@ -354,6 +375,12 @@ module Controllers{
 		"thread",
 	}
 
+	interface INewThread{
+		title: string;
+	}
+
+	interface INewRecord extends Models.IRecord{}
+
 	interface IScope extends angular.IScope{
 		MainViewType: any;
 		mainView: MainViewType;
@@ -367,6 +394,11 @@ module Controllers{
 		setCurrentThread(thread:Models.Thread): void;
 		switchMainView(viewType:MainViewType): void;
 		setMenuViewType(viewType:MenuViewType): void;
+
+		newThread: INewThread;
+		postThread(): void;
+		newResponse: INewRecord;
+		postResponse(): void;
 	}
 
 	export class MikaCtrl{
@@ -376,6 +408,26 @@ module Controllers{
 
 			$scope.setCurrentThread = (thread:Models.Thread)=>{this.setCurrentThread(thread);};
 			$scope.switchMainView = (viewType:MainViewType)=>{this.switchMainView(viewType);};
+
+			var tl = new Models.ThreadList();
+			tl.reload({
+				"success": ()=>{
+					$scope.threads = tl;
+					$scope.currentThread = tl.get(0);
+					if($scope.currentThread){
+						$scope.currentThread.reload({
+							"success": ()=>{
+								$scope.$apply();
+							},
+							"error": ()=>{return;},
+						});
+					}else{
+						$scope.switchMainView(MainViewType.newThread);
+					}
+					$scope.$apply();
+				},
+				"error": ()=>{return;},
+			});
 		}
 
 		setCurrentThread(thread){
@@ -403,7 +455,49 @@ module Controllers{
 		}
 	}
 
-	export class ThreadCtrl{}
+	export class ThreadCtrl{
+		constructor(private $scope:IScope, private $rootScope){
+			$scope.newThread = <INewThread>{
+				"title": null,
+			};
+			$scope.postThread = ()=>{return this.postThread();};
+
+			$scope.newResponse = <INewRecord>{
+				"name": null,
+				"mail": null,
+				"body": null,
+//                 "attach_sfx": null,
+			};
+			$scope.postResponse = ()=>{return this.postResponse();};
+		}
+
+		postThread(){
+			this.$scope.threads.add(this.$scope.newThread.title, <API.IAjaxCallback>{
+				"success": (thread)=>{
+					this.$scope.setCurrentThread(thread);
+					this.$rootScope.$apply();
+				},
+				"error": ()=>{return;},
+			});
+			return false;
+		}
+
+		postResponse(){
+			var callback = <API.IAjaxCallback>{
+				"success": ()=>{
+					this.$scope.currentThread.reload({
+						"success": ()=>{
+							this.$scope.$apply();
+						},
+						"error": ()=>{return;},
+					});
+				},
+				"error": ()=>{return;},
+			};
+			var record = this.$scope.newResponse;
+			this.$scope.currentThread.post(record, callback);
+		}
+	}
 }
 
 angular.module("mika", [])

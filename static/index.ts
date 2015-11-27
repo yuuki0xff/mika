@@ -227,7 +227,7 @@ module Models{
 		private converter(json):Array<Record>{
 			var records = [];
 			for(var i in json.records){
-				records.push(new Record(this.thread_id, json.threads[i]));
+				records.push(new Record(this.thread_id, json.records[i]));
 			}
 			return records;
 		}
@@ -235,8 +235,8 @@ module Models{
 			var opt = {};
 			var preCallback:API.IAjaxCallback = {
 				"success": (data)=>{
-					var rec = this.converter(data);
-					callback.success(rec);
+					this.records = this.converter(data);
+					callback.success(this);
 				},
 				"error": callback.error,
 			};

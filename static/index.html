@@ -20,7 +20,7 @@
 			<li ng-class='mainView == MainViewType.newThread && "selected"'>
 				<a href='' ng-click='switchMainView(MainViewType.newThread)'>New Thread</a>
 			</li>
-			<li ng-repeat='thread in threads' thread_name='{{thread.title}}' ng-class='thread.thread_id == currentThread.thread_id && "selected"'>
+			<li ng-repeat='thread in threads.threads' thread_name='{{thread.title}}' ng-class='thread.id == currentThread.id && "selected"'>
 				<a href='' ng-click='setCurrentThread(thread)'>{{thread.title}}</a>
 			</li>
 		</ul>
@@ -34,8 +34,8 @@
 
 	<div class='main'>
 		<div class='new_thread_view post' ng-controller='ThreadCtrl' ng-class='mainView == MainViewType.newThread && "active"'>
-			<form action='#'>
-				スレッド名 : <input name='thread_name' />
+			<form ng-submit='postThread()'>
+				スレッド名 : <input ng-model='newThread.title' />
 				<input value='表示' type='submit' />
 			</form>
 		</div>
@@ -43,7 +43,7 @@
 		<div class='thread_view' ng-controller='ThreadCtrl' ng-class='mainView == MainViewType.thread && "active"'>
 			<h1 class='title'>{{currentThread.title}}</h1>
 			<div class='record_list'>
-				<div ng-repeat='record in currentThread.recordList'>
+				<div ng-repeat='record in currentThread.recordList.records'>
 					<div class='header'>
 						<span class='id'>{{record.id}}</span>
 						<span class='name'>{{record.name}}</span>
@@ -54,16 +54,17 @@
 				</div>
 			</div>
 			<div class='post'>
-				<form action='#'>
-					名前 : <input name='name' />
-					メール : <input name='mail' />
+				<form ng-submit='postResponse()'>
+					名前 : <input name='name' ng-model='newResponse.name' />
+					メール : <input name='mail' ng-model='newResponse.mail' />
 					<input type='submit' value='投稿' />
-					<textarea name='body'></textarea>
+					<textarea name='body' ng-model='newResponse.body'></textarea>
 				</form>
 			</div>
 		</div>
 	</div>
 
+	<script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js'></script>
 	<script src='https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.8/angular.min.js'></script>
 	<script src='./index.js'></script>
 </div>

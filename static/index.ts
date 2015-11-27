@@ -52,10 +52,15 @@ module API{
 				"title": title,
 			}, callback);
 		}
+		static post(title:string, callback:IAjaxCallback){
+			ajax("post", "threads", {
+				"title": title,
+			}, callback);
+		}
 	}
 
 	export class Records{
-		static get(thread:Models.IThreadInfo, opt:any, callback:IAjaxCallback);
+		static get(thread:Models.IRecordList, opt:any, callback:IAjaxCallback);
 		static get(record:Models.IRecordInfo, opt:any, callback:IAjaxCallback);
 		static get(argv1:any, opt:any, callback:IAjaxCallback){
 			if(typeof argv1.record_id != "undefined"){
@@ -63,7 +68,7 @@ module API{
 				var path = ["records", r.thread_id, r.timestamp, r.record_id].join("/");
 				ajax("get", path, opt, callback);
 			}else{
-				var t = <Models.IThreadInfo>argv1;
+				var t = <Models.IRecordList>argv1;
 				var path = ["records", t.thread_id].join("/");
 				ajax("get", path, opt, callback);
 			}
@@ -122,6 +127,11 @@ module Models{
 	 * IThread
 	 * IThreadList
 	****************************************************************/
+	interface IList<t>{
+		getAll(): t[];
+		get(index:number): t;
+	}
+
 	export interface IRecordInfo{
 		thread_id:number;
 		record_id:string;
@@ -132,17 +142,17 @@ module Models{
 		name:string;
 		mail:string;
 		body:string;
-		attach:boolean;
+//         attach_sfx:boolean;
 	}
 
-	export interface IRecordList{
+	export interface IRecordList extends IList<IRecord>{
 		thread_id:number;
-		records:Array<IRecord>;
 		filter:Models.Filters.IRecordListFilter;
+		reload(callback:API.IAjaxCallback);
 	}
 
 	export interface IThreadInfo{
-		thread_id:number;
+		id:number;
 		title:string;
 		timestamp:number; // 最終書き込み日時
 		recordCount:number;
@@ -157,9 +167,9 @@ module Models{
 		get(filter:Models.Filters.IRecordListFilter):IRecordList;
 	}
 
-	export interface IThreadList{
-		threads:Array<IThread>;
-		filter:Models.Filters.IThreadListFilter;
+	export interface IThreadList extends IList<IThread>{
+		reload(callback:API.IAjaxCallback);
+		add(title:string, callback:API.IAjaxCallback);
 	}
 
 	/****************************************************************
@@ -202,19 +212,34 @@ module Models{
 
 	export class RecordList{
 		thread_id:number;
-		records:Array<IRecord>;
+		private records:Array<IRecord>;
 
-		constructor(public filter:Models.Filters.IRecordListFilter=undefined){}
+		constructor(thread:IThreadInfo, public filter:Models.Filters.IRecordListFilter=undefined){
+			this.thread_id = thread.id;
+		}
 
+		getAll(): IRecord[]{
+			return this.records;
+		}
+		get(i:number): IRecord{
+			return this.records[i];
+		}
 		private converter(json):Array<Record>{
 			var records = [];
 			for(var i in json.records){
-				records.push(new Record(this.thread_id, json.threads[i]));
+				records.push(new Record(this.thread_id, json.records[i]));
 			}
 			return records;
 		}
 		reload(callback:API.IAjaxCallback){
 			var opt = {};
+			var preCallback:API.IAjaxCallback = {
+				"success": (data)=>{
+					this.records = this.converter(data);
+					callback.success(this);
+				},
+				"error": callback.error,
+			};
 			if(this.filter){
 				for(var key in "limit id start_time end_time".split(" ")){
 					if(this.filter[key]){
@@ -222,18 +247,18 @@ module Models{
 					}
 				}
 			}
-			// TODO: サーバから取得してくる
+			API.Records.get(this, opt, preCallback);
 		}
 	}
 
 	export class ThreadInfo implements IThreadInfo{
-		thread_id:number;
+		id:number;
 		title:string;
 		timestamp:number;
 		recordCount:number;
 
 		constructor(threadInfo:IThreadInfo){
-			this.thread_id = threadInfo.thread_id;
+			this.id = threadInfo.id;
 			this.title = threadInfo.title;
 			this.timestamp = threadInfo.timestamp;
 			this.recordCount = threadInfo.recordCount;
@@ -245,7 +270,7 @@ module Models{
 			};
 			var cb = {
 				success: (data)=>{
-					this.thread_id = data.threads[0].thread_id;
+					this.id = data.threads[0].id;
 					this.title = data.threads[0].title;
 					this.timestamp = data.threads[0].timestamp;
 					this.recordCount = data.threads[0].recordCount;
@@ -262,20 +287,21 @@ module Models{
 
 		constructor(thread:IThreadInfo){
 			super(<IThreadInfo>thread);
+			this.recordList = new RecordList(this);
 		}
 
 		post(rec:IRecord, callback:API.IAjaxCallback){
-			API.Records.post(this.thread_id, rec, callback);
+			API.Records.post(this.id, rec, callback);
 		}
 		reload(callback:API.IAjaxCallback){
-			//API.Records.get() // TODO: 指定した時刻以内のレコードを取得する
+			this.recordList.reload(callback);
 		}
 		update(callback:API.IAjaxCallback){
 			var opt = {
-				"start_time": Math.max.apply(null, this.recordList.records),
 				"limit": 1000,
 			};
-			API.Records.get(<IThreadInfo>this, opt, callback);
+			// TODO:
+//             API.Records.get(<IThreadInfo>this, opt, callback);
 		}
 		get(filter:Models.Filters.IRecordListFilter):IRecordList{
 			return this.recordList;
@@ -283,14 +309,27 @@ module Models{
 	}
 
 	export class ThreadList implements IThreadList{
-		threads:Array<IThread> = [];
+		private threads:Array<IThread> = [];
 
 		constructor(public filter:Models.Filters.IThreadListFilter=undefined){}
 
+		getAll(): IThread[]{
+			return this.threads;
+		}
+		get(i:number): IThread{
+			return this.threads[i];
+		}
+
 		private converter(json):Array<IThread>{
 			var threads = [];
-			for(var i in json.threads){
-				threads.push(new Thread(json.threads[i]));
+			if(json.threads){
+				for(var i in json.threads){
+					var th = json.threads[i];
+					threads.push(new Thread(th));
+				}
+			}else if(json.thread){
+					var th = json.thread;
+				threads.push(new Thread(th));
 			}
 			return threads;
 		}
@@ -311,6 +350,17 @@ module Models{
 				error: callback.error,
 			});
 		}
+		add(title:string, callback:API.IAjaxCallback){
+			var preCallback = <API.IAjaxCallback>{
+				"success": (json)=>{
+					var th = this.converter(json)[0];
+					this.threads.push(th);
+					return callback.success(th);
+				},
+				"error": callback.error,
+			};
+			API.Threads.post(title, preCallback);
+		}
 	}
 }
 
@@ -325,44 +375,59 @@ module Controllers{
 		"thread",
 	}
 
+	interface INewThread{
+		title: string;
+	}
+
+	interface INewRecord extends Models.IRecord{}
+
+	interface IScope extends angular.IScope{
+		MainViewType: any;
+		mainView: MainViewType;
+		MenuViewType: any;
+		menuView: MenuViewType;
+
+		threads: Models.IThreadList;
+		currentThread: Models.IThread;
+		tags: any[];
+
+		setCurrentThread(thread:Models.Thread): void;
+		switchMainView(viewType:MainViewType): void;
+		setMenuViewType(viewType:MenuViewType): void;
+
+		newThread: INewThread;
+		postThread(): void;
+		newResponse: INewRecord;
+		postResponse(): void;
+	}
+
 	export class MikaCtrl{
-		constructor(private $scope:any){
+		constructor(private $scope:IScope){
 			$scope.MainViewType = MainViewType;
 			$scope.mainView = MainViewType.thread;
 
-			$scope.setCurrentThread = (thread)=>{this.setCurrentThread(thread);};
-			$scope.switchMainView = (viewType)=>{this.switchMainView(viewType);};
+			$scope.setCurrentThread = (thread:Models.Thread)=>{this.setCurrentThread(thread);};
+			$scope.switchMainView = (viewType:MainViewType)=>{this.switchMainView(viewType);};
 
-			//////////////////////
-			// Generate test data.
-			//
-			$scope.threads = [];
-			for(var i=0; i<30; i++){
-				var th = {
-					"thread_id": i,
-					"title": "THREAD"+i+" TITLE",
-					"recordList": [],
-				};
-				for(var j=0; j<50; j++){
-					th.recordList.push({
-						"id": "abcdefgh",
-						"name": "anonymous",
-						"mail": "sage",
-						"body": "record"+i+","+j,
-						"attach": false,
-						"timestamp": 1448000000 + i*100000,
-					});
-				}
-				$scope.threads.push(th);
-			}
-			$scope.currentThread = $scope.threads[0];
-
-			$scope.tags = [];
-			for(var i=1; i<30; i++){
-				$scope.tags.push({
-					"name": "tag"+i,
-				});
-			}
+			var tl = new Models.ThreadList();
+			tl.reload({
+				"success": ()=>{
+					$scope.threads = tl;
+					$scope.currentThread = tl.get(0);
+					if($scope.currentThread){
+						$scope.currentThread.reload({
+							"success": ()=>{
+								$scope.$apply();
+							},
+							"error": ()=>{return;},
+						});
+					}else{
+						$scope.switchMainView(MainViewType.newThread);
+					}
+					$scope.$apply();
+				},
+				"error": ()=>{return;},
+			});
 		}
 
 		setCurrentThread(thread){
@@ -378,19 +443,61 @@ module Controllers{
 	}
 
 	export class MenuCtrl{
-		constructor(private $scope:any){
+		constructor(private $scope:IScope){
 			$scope.MenuViewType = MenuViewType;
 			$scope.menuView = MenuViewType.thread;
 
-			$scope.setMenuViewType = (viewType)=>{this.setMenuViewType(viewType);};
+			$scope.setMenuViewType = (viewType:MenuViewType)=>{this.setMenuViewType(viewType);};
 		}
 
-		setMenuViewType(viewType){
+		setMenuViewType(viewType:MenuViewType){
 			this.$scope.menuView = viewType;
 		}
 	}
 
-	export class ThreadCtrl{}
+	export class ThreadCtrl{
+		constructor(private $scope:IScope, private $rootScope){
+			$scope.newThread = <INewThread>{
+				"title": null,
+			};
+			$scope.postThread = ()=>{return this.postThread();};
+
+			$scope.newResponse = <INewRecord>{
+				"name": null,
+				"mail": null,
+				"body": null,
+//                 "attach_sfx": null,
+			};
+			$scope.postResponse = ()=>{return this.postResponse();};
+		}
+
+		postThread(){
+			this.$scope.threads.add(this.$scope.newThread.title, <API.IAjaxCallback>{
+				"success": (thread)=>{
+					this.$scope.setCurrentThread(thread);
+					this.$rootScope.$apply();
+				},
+				"error": ()=>{return;},
+			});
+			return false;
+		}
+
+		postResponse(){
+			var callback = <API.IAjaxCallback>{
+				"success": ()=>{
+					this.$scope.currentThread.reload({
+						"success": ()=>{
+							this.$scope.$apply();
+						},
+						"error": ()=>{return;},
+					});
+				},
+				"error": ()=>{return;},
+			};
+			var record = this.$scope.newResponse;
+			this.$scope.currentThread.post(record, callback);
+		}
+	}
 }
 
 angular.module("mika", [])

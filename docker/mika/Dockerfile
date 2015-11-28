@@ -9,6 +9,7 @@ RUN pip3 install django && \
 
 EXPOSE 3000
 
+RUN useradd -u 1000 -s /bin/sh -m mika
 ADD startup.sh /
 CMD /bin/bash /startup.sh
 

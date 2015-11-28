@@ -29,7 +29,7 @@ else:
 	with open(_ROOT_DIR+'/core/db.address') as _fp:
 		DB_ADDRESS=_fp.read()
 
-MESSAGE_QUEUE_SOCK_FILE = "/run/mika.msgq.sock"
+MESSAGE_QUEUE_SOCK_FILE = "/run/mika/msgq.sock"
 MAX_THREADS = 16
 MAX_CONNECTIONS = 16
 HTTP_TIMEOUT = 16

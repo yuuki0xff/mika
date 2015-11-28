@@ -7,6 +7,9 @@ from queue import Queue
 import logging
 log = logging.getLogger(__name__)
 
+# TODO: このアドレスを外部から取得するようにする
+nodename = '192.168.56.1:80+server_api'
+
 def getRecord(msg):
 	s = Session()
 	addr, thread_id, hex_id, atime = msg.msg.split()
@@ -38,9 +41,9 @@ def getRecord(msg):
 
 def _updateRecord_httpGetWrapper(host, fname, time, hex_id, thread_id):
 	try:
-		url = 'http://{}/update/{}/{}/{}/'.format(host, fname, time, hex_id,)
+		url = 'http://{}/update/{}/{}/{}/{}'.format(host, fname, time, hex_id, nodename)
 		httpGet(url)
-		log.info('updateRecord[Done] {}/{}/{} {} {}'.format(thread_id, time, hex_id, host, str(e),))
+		log.info('updateRecord[Done] {}/{}/{} {}'.format(thread_id, time, hex_id, host,))
 		return True
 	except URLError as e:
 		log.info('updateRecord[Fail] {}/{}/{} {} {}'.format(thread_id, time, hex_id, host, str(e),))

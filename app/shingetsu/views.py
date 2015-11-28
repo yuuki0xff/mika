@@ -15,11 +15,6 @@ class ping(View):
 		addr = request.META['REMOTE_ADDR']
 		response = HttpResponse()
 		response.write("PONG\n"+str(addr))
-		s = Session()
-		if not Node.getThisNode(s, addr).first():
-			s.add(Node(host=addr))
-			s.commit()
-		s.close()
 		return response
 
 class node(View):

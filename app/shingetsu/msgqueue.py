@@ -10,5 +10,19 @@ def getAndUpdateRecord(addr, thread_id, hex_id, timestamp):
 		MessageQueue.enqueue(s, msgtype='get_record', msg=msg)
 	MessageQueue.enqueue(s, msgtype='update_record', msg=msg)
 	s.commit()
+
+	notify()
+
+def updateRecord(thread_id, hex_id, timestamp):
+	s = Session()
+
+	timestamp = str(int(float(timestamp)))
+	hex_id = str(hex_id)
+	thread_id = str(thread_id)
+	for node in Node.getLinkedNode(s).all():
+		msg = ' '.join((node.host, thread_id, hex_id, timestamp))
+		MessageQueue.enqueue(s, msgtype='update_record', msg=msg)
+	s.commit()
+
 	notify()
 

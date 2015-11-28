@@ -6,6 +6,7 @@ from lib.utils import *
 from sqlalchemy.sql import func as sql_func
 from binascii import *
 from app.shingetsu.utils import makeRecordStr, str2recordInfo
+from app.shingetsu import msgqueue
 
 class threads(View):
 	def get(self, request, *args, **kwargs):
@@ -144,6 +145,8 @@ class records(View):
 		bin_id = a2b_hex(bin_id_hex)
 		Record.add(s, thread_id, timestamp, bin_id, body)
 		s.commit()
+
+		msgqueue.updateRecord(thread_id, bin_id_hex, timestamp)
 		return HttpResponse()
 
 class attach(View):

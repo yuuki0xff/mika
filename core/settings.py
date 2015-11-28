@@ -18,6 +18,10 @@ sys.path.extend([
 	_ROOT_DIR+'/lib',
 	_ROOT_DIR+'/require'])
 
+APPLICATION_NAME='Mika'
+PROTOCOLS = ['shinGETsu/0.7', 'Mikaduki/0.1']
+VERSION = '0.1.0'
+
 if all((x in os.environ) for x in ['MIKA_DB_TYPE', 'MIKA_DB_AUTH', 'MIKA_DB_ADDR', 'MIKA_DB_NAME',]):
 	DB_ADDRESS = '{}://{}@{}/{}'.format(
 			os.environ['MIKA_DB_TYPE'],

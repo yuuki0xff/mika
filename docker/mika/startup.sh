@@ -3,5 +3,6 @@ set -euv
 export MIKA_DB_ADDR=${MYSQL_PORT_3306_TCP#tcp://}
 
 cd /srv
+./manage.py msgqueue_daemon &
 exec uwsgi --ini ./core/uwsgi.ini
 

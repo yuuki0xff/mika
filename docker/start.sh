@@ -15,6 +15,9 @@ MYSQL_CID=$(echo MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD} |
 		--env-file /dev/stdin \
 		$DOCKER_MYSQL | cut -c1-12
 )
+sleep 10
+docker exec -i $MYSQL_CID mysql -uroot -p$MYSQL_ROOT_PASSWORD <$ROOT_DIR/db.sql
+
 MIKA_CID=$(echo MIKA_DB_AUTH=root:${MYSQL_ROOT_PASSWORD} |
 	docker run -dt \
 		-v $ROOT_DIR:/srv:ro \
@@ -31,7 +34,5 @@ NGINX_CID=$(docker run -dt \
 	$DOCKER_NGINX | cut -c1-12
 )
 
-sleep 10
-docker exec -i $MYSQL_CID mysql -uroot -p$MYSQL_ROOT_PASSWORD <$ROOT_DIR/db.sql
 echo MySQL Password: $MYSQL_ROOT_PASSWORD
 

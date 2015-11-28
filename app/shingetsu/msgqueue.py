@@ -1,5 +1,6 @@
 
 from lib.models import *
+from lib.msgqueue import *
 
 def getAndUpdateRecord(addr, thread_id, hex_id, timestamp):
 	s = Session()

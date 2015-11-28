@@ -47,12 +47,9 @@ def getTimeRange(atime, starttime, endtime):
 
 def httpGet(http_addr):
 	log.debug('HTTP_GET '+http_addr)
-	request = Request(http_addr)
-	request.add_header('Accept-encoding', 'gzip')
-	with urlopen(request, timeout=settings.HTTP_TIMEOUT) as httpsock:
-		bi = io.BytesIO(httpsock.read())
-		text = gzip.GzipFile(fileobj=bi, mode='rb')
-		return text.read().decode('utf-8')
+	request = urlopen(http_addr, timeout=settings.HTTP_TIMEOUT)
+	with request as httpsock:
+		return httpsock.read().decode('utf-8')
 
 def str2recordInfo(string):
 	for record in string.splitlines():

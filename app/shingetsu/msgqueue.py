@@ -3,6 +3,8 @@ from lib.models import *
 
 def getAndUpdateRecord(addr, thread_id, hex_id, timestamp):
 	s = Session()
+
+	timestamp = int(float(timestamp))
 	msg = ' '.join((addr, str(thread_id), str(hex_id), str(timestamp)))
 	if addr is not None:
 		MessageQueue.enqueue(s, msgtype='get_record', msg=msg)

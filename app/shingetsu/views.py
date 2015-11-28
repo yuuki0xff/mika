@@ -4,7 +4,7 @@ from django.http import HttpResponse
 # from shingetsu.models import *
 from lib.models import *
 from shingetsu.utils import *
-from shingetsu import msgqueue_worker
+from shingetsu import msgqueue
 from binascii import *
 from utils import *
 
@@ -138,7 +138,7 @@ class update(View):
 			thread_id = Thread.get(s, title=title).value(Thread.id)
 			if not thread_id:
 				return response
-			msgqueue_worker.getAndUpdateRecord(addr, thread_id, id_hex, atime)
+			msgqueue.getAndUpdateRecord(addr, thread_id, id_hex, atime)
 		return response
 
 class recent(View):

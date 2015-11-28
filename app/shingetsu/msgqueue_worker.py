@@ -67,11 +67,3 @@ def updateRecord(msg):
 	multiThread(_updateRecord_httpGetWrapper, queue, maxWorkers=settings.MAX_CONNECTIONS)
 	return True
 
-def getAndUpdateRecord(addr, thread_id, hex_id, atime):
-	s = Session()
-	msg = ' '.join((addr, str(thread_id), str(hex_id), str(atime)))
-	MessageQueue.enqueue(s, msgtype='get_record', msg=msg)
-	MessageQueue.enqueue(s, msgtype='update_record', msg=msg)
-	s.commit()
-	notify()
-

@@ -63,6 +63,7 @@ def dispatcher(workerFunc):
 
 def notify():
 	with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
+		s.settimeout(0)
 		try:
 			s.connect(settings.MESSAGE_QUEUE_SOCK_FILE)
 		except:

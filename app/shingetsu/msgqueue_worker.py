@@ -77,11 +77,15 @@ def _getRecent_worker(host):
 	except URLError as e:
 		return
 	with Session() as s:
+		fileNames = []
 		for line in str2recordInfo(recent):
 			timestamp, recordId, fileName = line[0:3]
 			if fileName.split('_')[0] not in ('thread'):
 				continue
+			fileNames.append(fileName)
 
+		for fileName in sorted(fileNames):
+			thread = None
 			thread = Thread.get(s, filename=fileName).first()
 			if thread is None:
 				continue

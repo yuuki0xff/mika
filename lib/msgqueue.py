@@ -68,3 +68,10 @@ def notify():
 		except:
 			pass
 
+def getTimer(interval, func, args=[], kwargs={}):
+	def timer():
+		while True:
+			func(*args, **kwargs)
+			time.sleep(interval)
+	return timer
+

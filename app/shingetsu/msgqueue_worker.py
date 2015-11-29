@@ -70,3 +70,46 @@ def updateRecord(msg):
 	multiThread(_updateRecord_httpGetWrapper, queue, maxWorkers=settings.MAX_CONNECTIONS)
 	return True
 
+def _getRecent_worker(host):
+	urlSuffix = '/recent/0-'
+	try:
+		s = Session()
+		recent = httpGet('http://' + host + urlSuffix)
+		for line in str2recordInfo(recent):
+			timestamp, recordId, fileName = line[0:3]
+			if fileName.split('_')[0] not in ('thread'):
+				continue
+
+			thread = Thread.get(s, filename=fileName).first()
+			if thread is None:
+				continue
+			MessageQueue.enqueue(s, msgtype='get_thread', msg=' '.join((host, fileName)))
+		s.commit()
+		notify()
+	except URLError as e:
+		pass
+
+def getRecent(msg):
+	queue = Queue()
+	s = Session()
+	for node in Node.getLinkedNode(s).all():
+		queue.put((node.host,))
+	multiThread(_getRecent_worker, queue, maxWorkers=settings.MAX_CONNECTIONS)
+
+def getThread(msg):
+	host, fileName = msg.msg.split()
+	response = httpGet('http://{}/head/{}/0-'.format(host, fileName))
+
+	s = Session()
+	threadTitle = a2b_hex(fileName.split('_')[1]).decode('utf-8')
+	thread = Thread.get(s, title=threadTitle).first()
+	if thread is None:
+		return
+	for timestamp, recordId in str2recordInfo(response):
+		timestamp = int(timestamp)
+		if Record.get(s, thread.id, a2b_hex(recordId), timestamp).first() is None:
+			msg = ' '.join((host, str(thread.id), recordId, str(timestamp)))
+			MessageQueue.enqueue(s, msgtype='get_record', msg=msg)
+	s.commit()
+	notify()
+

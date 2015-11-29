@@ -93,7 +93,8 @@ CREATE TABLE message_queue(
 INSERT INTO message_type(priority, name) values
 	(50, 'get_record'),
 	(60, 'update_record'),
-	(70, 'get_thread');
+	(70, 'get_thread'),
+	(80, 'get_recent');
 
 DELIMITER $$
 

@@ -35,9 +35,9 @@ def dispatcher(workerFunc):
 		sock.listen(1)
 		while True:
 			try:
-				s = Session()
-				msg = MessageQueue.dequeue(s)
-				s.commit()
+				with Session() as s:
+					msg = MessageQueue.dequeue(s)
+					s.commit()
 				if msg is None:
 					s.close()
 					try:

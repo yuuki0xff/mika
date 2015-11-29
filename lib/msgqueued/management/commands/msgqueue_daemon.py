@@ -19,11 +19,11 @@ class Command(BaseCommand):
 				'get_recent': shingetsu_worker.getRecent,
 				}
 		def recentTimer(**kwargs):
-			s = Session()
-			MessageQueue.enqueue(s, msgtype='get_recent', msg='')
-			s.commit()
-			notify()
-		threading.Thread(target=getTimer(10, recentTimer)).start()
+			with Session() as s:
+				MessageQueue.enqueue(s, msgtype='get_recent', msg='')
+				s.commit()
+				notify()
+		threading.Thread(target=getTimer(1, recentTimer)).start()
 		msgqueue.dispatcher(workerFunc)
 		log.info('stop Message Queue Daemoon.')
 

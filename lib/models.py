@@ -1,8 +1,10 @@
 from sqlalchemy import create_engine
 from sqlalchemy import select
 import sqlalchemy.sql.expression as sql_func
-from sqlalchemy.orm.session import Session, sessionmaker
+from sqlalchemy.orm.session import sessionmaker
+from sqlalchemy.orm.scoping import scoped_session
 from sqlalchemy.ext.declarative import declarative_base
+from contextlib import contextmanager
 from datetime import datetime
 from binascii import *
 from utils import *
@@ -10,8 +12,19 @@ from core import settings
 
 engine = create_engine(settings.DB_ADDRESS, echo=False)
 Base = declarative_base()
-Session = sessionmaker(bind=engine)
+_ScopedSession = scoped_session(sessionmaker(bind=engine))
 Base.metadata.bind = engine
+
+@contextmanager
+def Session():
+	s = _ScopedSession()
+	try:
+		yield s
+	except:
+		s.rollback()
+		raise
+	finally:
+		s.close()
 
 __all__ = "Session".split()
 tableNames = [

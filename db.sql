@@ -24,13 +24,13 @@ CREATE TABLE thread(
 
 CREATE TABLE record(
 	record_id INT UNSIGNED AUTO_INCREMENT,
-	thread_id INT UNSIGNED,
-	timestamp TIMESTAMP,
-	bin_id BINARY(16),
+	thread_id INT UNSIGNED NOT NULL,
+	timestamp TIMESTAMP NOT NULL,
+	bin_id BINARY(16) NOT NULL,
 	-- post
 	name CHAR(255),
 	mail CHAR(255),
-	body MEDIUMTEXT,
+	body MEDIUMTEXT NOT NULL,
 	-- attach
 	attach MEDIUMBLOB,
 	suffix CHAR(8),

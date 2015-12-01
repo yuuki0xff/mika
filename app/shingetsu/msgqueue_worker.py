@@ -84,8 +84,7 @@ def _getRecent_worker(host):
 			fileNames.append(fileName)
 
 		for fileName in sorted(fileNames):
-			thread = None
-			thread = Thread.get(s, filename=fileName).first()
+			thread = Thread.get(s, title=a2b_hex(fileName.split('_'))).first()
 			if thread is None:
 				continue
 			log.isEnabledFor(logging.INFO) and log.info('getRecent: found {} {}'.format(thread.id, host))

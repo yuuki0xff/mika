@@ -1,8 +1,13 @@
 
 from lib.models import *
 from lib.msgqueue import *
+import logging
+log = logging.getLogger(__name__)
 
 def getAndUpdateRecord(addr, thread_id, hex_id, timestamp):
+	log.isEnabledFor(logging.INFO) and log.info(
+			'getAndUpdateRecord: threadId:{} hexId:{} timestamp:{}'.format(thread_id, hex_id, timestamp))
+
 	with Session() as s:
 		timestamp = int(float(timestamp))
 		msg = ' '.join((addr, str(thread_id), str(hex_id), str(timestamp)))
@@ -14,6 +19,9 @@ def getAndUpdateRecord(addr, thread_id, hex_id, timestamp):
 	notify()
 
 def updateRecord(thread_id, hex_id, timestamp):
+	log.isEnabledFor(logging.INFO) and log.info(
+			'updateRecord: threadId:{} hexId:{} timestamp:{}'.format(thread_id, hex_id, timestamp))
+
 	with Session() as s:
 		timestamp = str(int(float(timestamp)))
 		hex_id = str(hex_id)

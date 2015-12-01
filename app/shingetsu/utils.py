@@ -46,7 +46,7 @@ def getTimeRange(atime, starttime, endtime):
 		raise 'ERROR'
 
 def httpGet(http_addr):
-	log.debug('HTTP_GET '+http_addr)
+	log.isEnabledFor(logging.DEBUG) and log.debug('HTTP_GET '+http_addr)
 	headers = {
 			'User-Agent': '{protocol} ({name} {version})'.format(protocol=' '.join(settings.PROTOCOLS), name=settings.APPLICATION_NAME, version=settings.VERSION),
 			'Accept-encoding': 'gzip',

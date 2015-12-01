@@ -19,7 +19,7 @@ def getRecord(msg):
 		atime = int(atime)
 
 		if Record.get(s, thread_id, bin_id, atime).value(Record.record_id):
-			log.info('getRecord[NOP] {}/{}/{} {}'.format(thread_id, atime, hex_id, addr))
+			log.isEnabledFor(logging.INFO) and log.info('getRecord: NOP {}/{}/{} {}'.format(thread_id, atime, hex_id, addr))
 			return True
 
 		title = Thread.get(s, id=thread_id).value(Thread.title)
@@ -33,10 +33,10 @@ def getRecord(msg):
 				if Record.get(s, thread_id, bin_id, timestamp).first():
 					continue
 				Record.add(s, thread_id, timestamp, bin_id, body)
-				log.info('getRecord[Add] {}/{}/{} {}'.format(thread_id, timestamp, b2a_hex(bin_id), addr))
+				log.isEnabledFor(logging.INFO) and log.info('getRecord: Add {}/{}/{} {}'.format(thread_id, timestamp, b2a_hex(bin_id), addr))
 			s.commit()
 		except URLError as e:
-			log.info('getRecord[Fail] {}/{}/{} {} {}'.format(thread_id, atime, hex_id, addr, str(e)))
+			log.isEnabledFor(logging.INFO) and log.info('getRecord: Fail {}/{}/{} {} {}'.format(thread_id, atime, hex_id, addr, str(e)))
 			return False
 		return True
 
@@ -44,10 +44,10 @@ def _updateRecord_httpGetWrapper(host, fname, time, hex_id, thread_id):
 	try:
 		url = 'http://{}/update/{}/{}/{}/{}'.format(host, fname, time, hex_id, nodename)
 		httpGet(url)
-		log.info('updateRecord[Done] {}/{}/{} {}'.format(thread_id, time, hex_id, host,))
+		log.isEnabledFor(logging.INFO) and log.info('updateRecord: Success {}/{}/{} {}'.format(thread_id, time, hex_id, host,))
 		return True
 	except URLError as e:
-		log.info('updateRecord[Fail] {}/{}/{} {} {}'.format(thread_id, time, hex_id, host, str(e),))
+		log.isEnabledFor(logging.INFO) and log.info('updateRecord: Error {}/{}/{} {} {}'.format(thread_id, time, hex_id, host, str(e),))
 		return False
 
 def updateRecord(msg):
@@ -59,15 +59,15 @@ def updateRecord(msg):
 		filename = Thread.getFileName(Thread.get(s, id=thread_id).value(Thread.title))
 
 		if Record.get(s, thread_id, bin_id, atime).value(Record.record_id) is None:
-			log.info('updateRecord[NOP] {}/{}/{} {}'.format(thread_id, atime, hex_id, addr))
+			log.isEnabledFor(logging.INFO) and log.info('updateRecord: Skip {}/{}/{} {}'.format(thread_id, atime, hex_id, addr))
 			return False
 
-		log.info('updateRecord[Run] {}/{}/{}'.format(thread_id, atime, hex_id,))
 		queue = Queue()
 		for host in Node.getLinkedNode(s).values(Node.host):
 			queue.put((
 				host.host, filename, atime, hex_id, thread_id,
 				))
+	log.isEnabledFor(logging.INFO) and log.info('updateRecord: Run {}/{}/{} {}'.format(thread_id, atime, hex_id, addr))
 	multiThread(_updateRecord_httpGetWrapper, queue, maxWorkers=settings.MAX_CONNECTIONS)
 	return True
 
@@ -90,11 +90,14 @@ def _getRecent_worker(host):
 			thread = Thread.get(s, filename=fileName).first()
 			if thread is None:
 				continue
+			log.isEnabledFor(logging.INFO) and log.info('getRecent: found {} {}'.format(thread.id, host))
 			MessageQueue.enqueue(s, msgtype='get_thread', msg=' '.join((host, fileName)))
 		s.commit()
 	notify()
 
 def getRecent(msg):
+	log.isEnabledFor(logging.INFO) and log.info('getRecent: {}'.format(msg.msg))
+
 	with Session() as s:
 		queue = Queue()
 		for node in Node.getLinkedNode(s).all():
@@ -102,6 +105,8 @@ def getRecent(msg):
 	multiThread(_getRecent_worker, queue, maxWorkers=settings.MAX_CONNECTIONS)
 
 def getThread(msg):
+	log.isEnabledFor(logging.INFO) and log.info('getThread: {}'.format(msg.msg))
+
 	with Session() as s:
 		host, fileName = msg.msg.split()
 		response = httpGet('http://{}/head/{}/0-'.format(host, fileName))

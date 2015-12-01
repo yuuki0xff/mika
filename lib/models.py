@@ -52,8 +52,10 @@ class Thread(Base):
 		query = session.query(cls)
 		if 'id' in kwargs:
 			query = query.filter(Thread.id == kwargs['id'])
-		if 'title' in kwargs:
+		elif 'title' in kwargs:
 			query = query.filter(Thread.title == kwargs['title'])
+		else:
+			assert(0)
 		return query
 	@classmethod
 	def getFileName(cls, title):

@@ -4,6 +4,7 @@ from lib.msgqueue import *
 from urllib.error import *
 from binascii import *
 from queue import Queue
+from random import shuffle
 import logging
 log = logging.getLogger(__name__)
 
@@ -116,4 +117,74 @@ def getThread(msg):
 				MessageQueue.enqueue(s, msgtype='get_record', msg=msg)
 		s.commit()
 		notify()
+
+def _doPing_worker(host):
+	try:
+		httpGet('http://' + host + '/ping')
+	except URLError:
+		pass
+
+def doPing(msg):
+	with Session() as s:
+		queue = Queue()
+		for node in Node.getLinkedNode(s).all():
+			queue.put((node.host,))
+		multiThread(_doPing_worker, queue, maxWorkers=settings.MAX_CONNECTIONS)
+		MessageQueue.enqueue(s, msgtype='join', msg='init')
+
+def _joinNetwork_findNodeWorker(host):
+	try:
+		newHost = httpGet('http://' + host + '/node')
+		with Session() as s:
+			if Node.getThisNode(s, newHost):
+				return
+			Node.add(s, newHost)
+			s.commit()
+	except URLError:
+		pass
+
+def _joinNetwork_joinWorker(host):
+	try:
+		response = httpGet('http://' + host + '/join/' + nodename).splitlines()
+		if len(response) == 2:
+			newHost = response[1]
+			with Session() as s:
+				if Node.getThisNode(s, newHost):
+					return
+				Node.add(s, newHost)
+				s.commit()
+	except URLError:
+		pass
+
+def _joinNetwork_doByeByeWorker(host):
+	try:
+		httpGet('http://' + host + '/bye/' + nodename)
+	except URLError:
+		pass
+
+def joinNetwork(msg):
+	with Session() as s:
+		queue = Queue()
+		for node in Node.getInitNode(s).all():
+			queue.put((node.host,))
+	multiThread(_joinNetwork_findNodeWorker, queue, maxWorkers=settings.MAX_CONNECTIONS)
+
+	with Session() as s:
+		linkedNodeCount = Node.getLinkedNode(s).count()
+		changeNodeCount = int(max(0, settings.MAX_NODES - linkedNodeCount) + settings.MAX_NODES/5)
+
+		queue = Queue()
+		for node in Node.getNotLinkedNode(s).limit(changeNodeCount).all():
+			queue.put((node.host,))
+	multiThread(_joinNetwork_joinWorker, queue, maxWorkers=settings.MAX_CONNECTIONS)
+
+	with Session() as s:
+		linkedNodes = Node.getLinkedNode(s).all()
+		shuffle(linkedNodes)
+
+		queue = Queue()
+		for i in range(max(0, Node.getLinkedNode(s).count() - settings.MAX_NODES)):
+			queue.put((linkedNodes[i].host,))
+	multiThread(_joinNetwork_doByeByeWorker, queue, maxWorkers=settings.MAX_CONNECTIONS)
+
 

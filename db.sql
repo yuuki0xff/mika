@@ -72,8 +72,12 @@ CREATE TABLE tag(
 CREATE TABLE node(
 	host CHAR(64) PRIMARY KEY,
 	linked BOOLEAN NOT NULL DEFAULT false,
+	init BOOLEAN NOT NULL DEFAULT false,
 	timestamp TIMESTAMP
 );
+INSERT INTO node(host, timestamp, init) values
+	('node.shingetsu.info:8000/server.cgi', '1970-01-01 00:00:01', true),
+	('rep4649.ddo.jp:8000/server.cgi', '1970-01-01 00:00:01', true);
 
 CREATE TABLE message_type(
 	id INT UNSIGNED AUTO_INCREMENT,
@@ -91,6 +95,9 @@ CREATE TABLE message_queue(
 	FOREIGN KEY(msgtype_id) REFERENCES message_type(id)
 ) ENGINE=MEMORY;
 INSERT INTO message_type(priority, name) values
+	(10, 'join'),
+	(20, 'ping'),
+	(30, 'search_other_node'),
 	(50, 'get_record'),
 	(60, 'update_record'),
 	(70, 'get_thread'),

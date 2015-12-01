@@ -37,6 +37,12 @@ MESSAGE_QUEUE_SOCK_FILE = "/run/mika/msgq.sock"
 MAX_THREADS = 16
 MAX_CONNECTIONS = 16
 HTTP_TIMEOUT = 16
+MAX_NODES = 50
+
+RECENT_INTERVAL=30*60
+PING_INTERVAL=5*60
+JOIN_INTERVAL=30*60
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/

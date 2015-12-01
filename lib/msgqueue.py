@@ -69,10 +69,21 @@ def notify():
 		except:
 			pass
 
-def getTimer(interval, func, args=[], kwargs={}):
+def messageScheduler(msgtype, msg='', interval=0, wait=0):
+	assert(interval > 0 or wait > 0)
+
 	def timer():
+		if wait:
+			time.sleep(wait)
 		while True:
-			func(*args, **kwargs)
+			with Session() as s:
+				log.isEnabledFor(logging.DEBUG) and log.debug(
+						'timer[{}] {}'.format(msgtype, msg))
+				MessageQueue.enqueue(s, msgtype=msgtype, msg=msg)
+				s.commit()
+			notify()
+			if not interval:
+				break
 			time.sleep(interval)
-	return timer
+	return threading.Thread(target=timer)
 

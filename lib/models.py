@@ -165,6 +165,26 @@ class Node(Base):
 		return session.query(cls)\
 				.filter(cls.linked == True)
 
+	@classmethod
+	def getNotLinkedNode(cls, session):
+		return session.query(cls)\
+				.filter(cls.linked == False)
+
+	@classmethod
+	def getInitNode(cls, session):
+		return session.query(cls)\
+				.filter(cls.init == True)
+
+	@classmethod
+	def add(cls, session, addr):
+		node = Node()
+		node.host = addr
+		node.timestamp = time.time()
+		session.add(node)
+
+	def updateTimestamp(self):
+		self.timestamp = time.time()
+
 class MessageType(Base):
 	__tablename__ = 'message_type'
 	__table_args__ = {'autoload': True}

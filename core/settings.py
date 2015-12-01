@@ -139,7 +139,7 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers':['console'],
-            'propagate': True,
+            'propagate': False,
             'level':'INFO',
         },
         'django.request': {
@@ -155,6 +155,22 @@ LOGGING = {
         'shingetsu': {
             'handlers': ['console'],
             'level': 'DEBUG',
+            'propagate': False,
+        },
+        'rest_api': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'msgqueued': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'msgqueue': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
         },
     }
 }

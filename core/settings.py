@@ -43,6 +43,10 @@ RECENT_INTERVAL=30*60
 PING_INTERVAL=5*60
 JOIN_INTERVAL=30*60
 
+# NODE_NAME = '<IP_ADDRESS>:<PORT>+server_api'
+# example:
+#   '192.0.2.2:80+server_api'
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/

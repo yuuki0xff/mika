@@ -5,11 +5,9 @@ from urllib.error import *
 from binascii import *
 from queue import Queue
 from random import shuffle
+import core.settings as settings
 import logging
 log = logging.getLogger(__name__)
-
-# TODO: このアドレスを外部から取得するようにする
-nodename = '192.168.56.1:80+server_api'
 
 def getRecord(msg):
 	with Session() as s:
@@ -42,7 +40,7 @@ def getRecord(msg):
 
 def _updateRecord_httpGetWrapper(host, fname, time, hex_id, thread_id):
 	try:
-		url = 'http://{}/update/{}/{}/{}/{}'.format(host, fname, time, hex_id, nodename)
+		url = 'http://{}/update/{}/{}/{}/{}'.format(host, fname, time, hex_id, settings.NODE_NAME)
 		httpGet(url)
 		log.isEnabledFor(logging.INFO) and log.info('updateRecord: Success {}/{}/{} {}'.format(thread_id, time, hex_id, host,))
 		return True
@@ -150,7 +148,7 @@ def _joinNetwork_findNodeWorker(host):
 
 def _joinNetwork_joinWorker(host):
 	try:
-		response = httpGet('http://' + host + '/join/' + nodename).splitlines()
+		response = httpGet('http://' + host + '/join/' + settings.NODE_NAME).splitlines()
 		if len(response) == 2:
 			newHost = response[1]
 			with Session() as s:
@@ -163,7 +161,7 @@ def _joinNetwork_joinWorker(host):
 
 def _joinNetwork_doByeByeWorker(host):
 	try:
-		httpGet('http://' + host + '/bye/' + nodename)
+		httpGet('http://' + host + '/bye/' + settings.NODE_NAME)
 	except URLError:
 		pass
 

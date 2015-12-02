@@ -148,10 +148,21 @@ def _joinNetwork_findNodeWorker(host):
 def _joinNetwork_joinWorker(host):
 	try:
 		response = httpGet('http://' + host + '/join/' + settings.NODE_NAME).splitlines()
+		if response[0] != 'WELCOME':
+			return
+
+		with Session() as s:
+			node = Node.getThisNode(s, host).first()
+			if node:
+				node.linked = True
+			else:
+				Node.add(s, host)
+			s.commit()
+
 		if len(response) == 2:
 			newHost = response[1]
 			with Session() as s:
-				if Node.getThisNode(s, newHost):
+				if Node.getThisNode(s, newHost).first():
 					return
 				Node.add(s, newHost)
 				s.commit()

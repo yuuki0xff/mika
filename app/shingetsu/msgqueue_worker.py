@@ -1,8 +1,8 @@
-from app.shingetsu.utils import *
-from lib.models import *
-from lib.msgqueue import *
-from urllib.error import *
-from binascii import *
+from app.shingetsu.utils import httpGet, str2recordInfo
+from lib.models import Session, Thread, Record, Node, MessageQueue
+from lib.msgqueue import multiThread, notify
+from urllib.error import URLError
+from binascii import a2b_hex, b2a_hex
 from queue import Queue
 from random import shuffle
 import core.settings as settings
@@ -73,7 +73,7 @@ def _getRecent_worker(host):
 	urlSuffix = '/recent/0-'
 	try:
 		recent = httpGet('http://' + host + urlSuffix)
-	except URLError as e:
+	except URLError:
 		return
 	with Session() as s:
 		fileNames = []

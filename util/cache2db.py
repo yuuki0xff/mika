@@ -18,7 +18,6 @@ from mysql.connector import connect as mysqlConnect
 import os
 import sys
 import binascii
-import time
 from datetime import datetime
 import base64
 
@@ -73,7 +72,6 @@ def main():
 				record_stamp = datetime.fromtimestamp(int(record[:record.index('_')]))
 				record_id = record[record.index('_')+1:]
 				record_id_bin = binascii.a2b_hex(record_id)
-				record_id_hex = '0x'+record_id
 
 				cur.execute(
 						'select r.thread_id from record as r where r.thread_id=%s and r.timestamp=%s and r.bin_id=%s'+ \

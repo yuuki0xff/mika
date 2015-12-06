@@ -1,9 +1,9 @@
 
-from lib.models import *
+from lib.models import Record
 import time
-from base64 import b64encode, b64decode
+from base64 import b64encode
 from datetime import datetime
-from binascii import *
+from binascii import b2a_hex
 from urllib.request import urlopen, Request
 import io
 import gzip
@@ -16,7 +16,6 @@ def splitFileName(fname):
 	return fname.split('_', 2)
 
 def record2str(query, include_body=1):
-	s = Session()
 	if not include_body:
 		query = query.with_entities(Record.bin_id, Record.timestamp, Record.raw_body)
 	for r in query:

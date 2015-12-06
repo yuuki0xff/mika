@@ -1,4 +1,4 @@
-from lib.models import *
+from lib.models import Session, MessageQueue
 import core.settings as settings
 import threading
 import socket
@@ -49,12 +49,12 @@ def dispatcher(workerFunc):
 				worker = workerFunc.get(msg.getTypeName(s))
 				try:
 					worker(msg)
-				except Exception as e:
+				except Exception:
 					log.error(''.join([
 						'Worker died.',
 						traceback.format_exc(),
 						]))
-			except Exception as e:
+			except Exception:
 				log.critical('\n'.join([
 					'Error occurs in the message loop...',
 					traceback.format_exc(),

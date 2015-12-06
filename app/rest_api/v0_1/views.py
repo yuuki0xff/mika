@@ -1,12 +1,13 @@
-from django.shortcuts import render
+
 from django.views.generic import View
-from django.http import JsonResponse, HttpResponse, HttpResponseNotFound
-from lib.models import *
-from lib.utils import *
+from django.http import JsonResponse, HttpResponse, HttpResponseNotFound, HttpResponseBadRequest
+from lib.models import Session, Thread, Record
+from lib.utils import datetime2timestamp
 from sqlalchemy.sql import func as sql_func
-from binascii import *
+from binascii import a2b_hex, b2a_hex
 from app.shingetsu.utils import makeRecordStr, str2recordInfo
 from app.shingetsu import msgqueue
+import time
 
 class threads(View):
 	def get(self, request, *args, **kwargs):
@@ -60,7 +61,7 @@ class threads(View):
 class records(View):
 	def get(self, request, *args, **kwargs):
 		records = []
-		limit = int(request.GET.get('limit', -1))
+#         limit = int(request.GET.get('limit', -1))
 
 		thread_id = int(kwargs['thread_id'])
 		with Session() as s:

@@ -1,6 +1,6 @@
 
-from lib.models import *
-from lib.msgqueue import *
+from lib.models import Session, MessageQueue, Node
+from lib.msgqueue import notify
 import logging
 log = logging.getLogger(__name__)
 

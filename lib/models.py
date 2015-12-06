@@ -7,7 +7,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from contextlib import contextmanager
 from datetime import datetime
 from binascii import *
-from utils import *
+from lib.utils import *
 from core import settings
 
 engine = create_engine(settings.DB_ADDRESS, echo=False)

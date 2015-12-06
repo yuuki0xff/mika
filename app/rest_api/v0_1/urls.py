@@ -1,5 +1,5 @@
 from django.conf.urls import patterns, include, url
-from rest_api.v0_1.views import *
+from app.rest_api.v0_1.views import *
 
 _thread_id = '(?P<thread_id>[0-9]+)'
 _timestamp = '(?P<timestamp>[0-9]+)'

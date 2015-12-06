@@ -14,8 +14,6 @@ import sys
 _ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.extend([
 	_ROOT_DIR,
-	_ROOT_DIR+'/app',
-	_ROOT_DIR+'/lib',
 	_ROOT_DIR+'/require'])
 
 APPLICATION_NAME='Mika'
@@ -71,9 +69,9 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'shingetsu',
-    'msgqueued',
-    'rest_api',
+    'app.shingetsu',
+    'lib.msgqueued',
+    'app.rest_api',
 )
 
 MIDDLEWARE_CLASSES = (

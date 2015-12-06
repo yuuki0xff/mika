@@ -1,9 +1,7 @@
-from django.core.management.base import BaseCommand, CommandError
-import core.settings as settings
-import msgqueue
-import shingetsu.msgqueue_worker as shingetsu_worker
-from lib.models import *
-from lib.msgqueue import *
+from django.core.management.base import BaseCommand
+from core import settings
+from lib import msgqueue
+import app.shingetsu.msgqueue_worker as shingetsu_worker
 import logging
 log = logging.getLogger(__name__)
 

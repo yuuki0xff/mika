@@ -3,10 +3,10 @@ from django.views.generic import View
 from django.http import HttpResponse
 # from shingetsu.models import *
 from lib.models import *
-from shingetsu.utils import *
-from shingetsu import msgqueue
+from app.shingetsu.utils import *
+from app.shingetsu import msgqueue
 from binascii import *
-from utils import *
+from lib.utils import *
 
 __all__ = 'ping node join bye have get head update recent'.split()
 

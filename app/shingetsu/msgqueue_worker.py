@@ -1,4 +1,4 @@
-from shingetsu.utils import *
+from app.shingetsu.utils import *
 from lib.models import *
 from lib.msgqueue import *
 from urllib.error import *

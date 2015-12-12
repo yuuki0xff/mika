@@ -115,6 +115,24 @@ class Record(Base):
 					cls.timestamp == datetime.fromtimestamp(timestamp)
 					)
 	@classmethod
+	def getFirstTime(cls, session, thread_id):
+		rec = session.query(Record) \
+				.filter(Record.thread_id == thread_id) \
+				.order_by(Record.timestamp) \
+				.first()
+		if rec:
+			return rec.timestamp
+		return 0
+	@classmethod
+	def getLastTime(cls, session, thread_id):
+		rec = session.query(Record) \
+				.filter(Record.thread_id == thread_id) \
+				.order_by(Record.timestamp.desc()) \
+				.first()
+		if rec:
+			return rec.timestamp
+		return 0
+	@classmethod
 	def add(cls, session, thread_id, timestamp, bin_id, body):
 		fields = {}
 		for i in body.split('<>'):

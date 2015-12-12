@@ -143,8 +143,8 @@ def getThread(msg):
 		if thread is None:
 			return
 
-		lastTime = int(time.mktime(Record.getLastTime(s, thread.id).timetuple()))
-		firstTime = int(time.mktime(Record.getFirstTime(s, thread.id).timetuple()))
+		lastTime = Record.getLastTime(s, thread.id)
+		firstTime = Record.getFirstTime(s, thread.id)
 
 		# 最新のレコードと、より古いレコードを取得する
 		MessageQueue.enqueue(s, msgtype='get_record', msg=' '.join([

@@ -121,7 +121,7 @@ class Record(Base):
 				.order_by(Record.timestamp) \
 				.first()
 		if rec:
-			return rec.timestamp
+			return int(time.mktime(rec.timestamp.timetuple()))
 		return 0
 	@classmethod
 	def getLastTime(cls, session, thread_id):
@@ -130,7 +130,7 @@ class Record(Base):
 				.order_by(Record.timestamp.desc()) \
 				.first()
 		if rec:
-			return rec.timestamp
+			return int(time.mktime(rec.timestamp.timetuple()))
 		return 0
 	@classmethod
 	def add(cls, session, thread_id, timestamp, bin_id, body):

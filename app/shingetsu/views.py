@@ -42,6 +42,7 @@ class join(View):
 			if thisNode:
 				welcome = True
 				thisNode.linked = True
+				thisNode.updateTimestamp()
 				s.commit()
 			elif linkedNodeCount < settings.MAX_NODES:
 				welcome = True

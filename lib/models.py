@@ -181,11 +181,11 @@ class Node(Base):
 	def add(cls, session, addr):
 		node = Node()
 		node.host = addr
-		node.timestamp = time.time()
+		node.timestamp = datetime.now()
 		session.add(node)
 
 	def updateTimestamp(self):
-		self.timestamp = time.time()
+		self.timestamp = datetime.now()
 
 class MessageType(Base):
 	__tablename__ = 'message_type'

@@ -122,7 +122,21 @@ def getThread(msg):
 
 def _doPing_worker(host):
 	try:
-		httpGet('http://' + host + '/ping')
+		response = httpGet('http://' + host + '/ping').splitlines()
+		with Session() as s:
+			node = Node.getThisNode(s, host).first()
+
+			if response[0].strip() != 'PONG':
+				node.linked = False
+			else:
+				node.updateTimestamp()
+
+			if len(response) > 1:
+				newNodeHost = response[1].strip()
+				newNode = Node.getThisNode(s, newNodeHost).first()
+				if not newNode:
+					Node.add(s, newNodeHost)
+			s.commit()
 	except URLError:
 		pass
 

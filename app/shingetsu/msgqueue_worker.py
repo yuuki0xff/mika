@@ -12,18 +12,26 @@ log = logging.getLogger(__name__)
 
 def getRecord(msg):
 	with Session() as s:
-		addr, thread_id, hex_id, atime = msg.msg.split()
-		thread_id = int(thread_id)
-		bin_id = a2b_hex(hex_id)
-		atime = int(atime)
+		if len(msg.msg.split()) == 4:
+			mode = 'single'
+			addr, thread_id, hex_id, atime = msg.msg.split()
+			thread_id = int(thread_id)
+			bin_id = a2b_hex(hex_id)
+			atime = int(atime)
+		else:
+			mode = 'multi'
+			addr, thread_id, timeRange = msg.msg.split()
 
-		if Record.get(s, thread_id, bin_id, atime).value(Record.record_id):
+		if mode == 'single' and Record.get(s, thread_id, bin_id, atime).value(Record.record_id):
 			log.isEnabledFor(logging.INFO) and log.info('getRecord: NOP {}/{}/{} {}'.format(thread_id, atime, hex_id, addr))
 			return True
 
 		title = Thread.get(s, id=thread_id).value(Thread.title)
 		filename = Thread.getFileName(title)
-		http_addr = 'http://{}/get/{}/{}'.format(addr, filename, atime)
+		if mode == 'single':
+			http_addr = 'http://{}/get/{}/{}'.format(addr, filename, atime)
+		else:
+			http_addr = 'http://{}/get/{}/{}'.format(addr, filename, timeRange)
 		try:
 			for record in str2recordInfo(httpGet(http_addr)):
 				timestamp, hex_id, body = record
@@ -35,7 +43,7 @@ def getRecord(msg):
 				log.isEnabledFor(logging.INFO) and log.info('getRecord: Add {}/{}/{} {}'.format(thread_id, timestamp, b2a_hex(bin_id), addr))
 			s.commit()
 		except URLError as e:
-			log.isEnabledFor(logging.INFO) and log.info('getRecord: Fail {}/{}/{} {} {}'.format(thread_id, atime, hex_id, addr, str(e)))
+			log.isEnabledFor(logging.INFO) and log.info('getRecord: Fail {} {} {}'.format(thread_id, http_addr, str(e)))
 			return False
 		return True
 

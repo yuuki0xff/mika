@@ -8,6 +8,7 @@ from queue import Queue
 from random import shuffle
 import core.settings as settings
 import logging
+import time
 log = logging.getLogger(__name__)
 
 def getRecord(msg):
@@ -117,19 +118,96 @@ def getRecent(msg):
 def getThread(msg):
 	log.isEnabledFor(logging.INFO) and log.info('getThread: {}'.format(msg.msg))
 
+	# ファイル名だけなら、全てのノードから順にスレッドを取得する
+	if len(msg.msg.split()) == 1:
+		fileName = msg.msg
+		with Session() as s:
+			for node in Node.getLinkedNode(s):
+				MessageQueue.enqueue(s, msgtype='get_thread', msg=' '.join([
+					node.host,
+					fileName,
+					]))
+			s.commit()
+		notify()
+		return True
+
 	with Session() as s:
 		host, fileName = msg.msg.split()
-		response = httpGet('http://{}/head/{}/0-'.format(host, fileName))
 
 		threadTitle = a2b_hex(fileName.split('_')[1]).decode('utf-8')
 		thread = Thread.get(s, title=threadTitle).first()
 		if thread is None:
 			return
-		for timestamp, recordId in str2recordInfo(response):
-			timestamp = int(timestamp)
-			if Record.get(s, thread.id, a2b_hex(recordId), timestamp).first() is None:
-				msg = ' '.join((host, str(thread.id), recordId, str(timestamp)))
-				MessageQueue.enqueue(s, msgtype='get_record', msg=msg)
+
+		firstTime = int(time.mktime(Record.getLastTime(s, thread.id).timetuple()))
+		lastTime = int(time.mktime(Record.getFirstTime(s, thread.id).timetuple()))
+		log.info(str(firstTime)+' '+str(lastTime))
+		return
+
+		# 最新のレコードと、より古いレコードを取得する
+		MessageQueue.enqueue(s, msgtype='get_record', msg=' '.join([
+			host, str(thread.id),
+			str(lastTime)+'-',
+			]))
+		if firstTime:
+			MessageQueue.enqueue(s, msgtype='get_record', msg=' '.join([
+				host, str(thread.id),
+				'-'+str(firstTime),
+				]))
+
+		if firstTime and lastTime:
+			# 未取得レコードが30%以上なら、その範囲をまとめて取得
+			# 30%未満なら、一つずつ取得
+			url = 'http://{}/head/{}/{}-{}'.format(
+					host, fileName,
+					str(Record.getFirstTime(s, thread.id)),
+					str(Record.getLastTime(s, thread.id)),
+					)
+			records = []
+			notExistsRecordCount = 0
+			existsRecordCount = 0
+			_existsRecordCount = 0
+			rate = None
+			try:
+				for timestamp, recordId in str2recordInfo(httpGet(url)):
+					timestamp = int(timestamp)
+					if Record.get(s, thread.id, a2b_hex(recordId), timestamp).first():
+						if notExistsRecordCount:
+							_existsRecordCount += 1
+					else:
+						records.append((timestamp, recordId,))
+						notExistsRecordCount += 1
+						existsRecordCount += _existsRecordCount
+						_existsRecordCount = 0
+						oldRate = rate
+						rate = notExistsRecordCount / (notExistsRecordCount + existsRecordCount)
+
+						if rate < 0.3 and oldRate >= 0.3:
+							# records[0:-1]の範囲のレコードをまとめて取得
+							newRecords = records.pop()
+							MessageQueue.enqueue(s, msgtype='get_record', msg=' '.join([
+								host, str(thread.id),
+								str(records[0][0]) + '-' + str(records[-1][0]),
+								]))
+							records = newRecords
+							notExistsRecordCount = 1
+							existsRecordCount = 0
+
+				if rate >= 0.3:
+					# まとめて取得
+					MessageQueue.enqueue(s, msgtype='get_record', msg=' '.join([
+						host, str(thread.id),
+						str(records[0][0]) + '-' + str(records[-1][0]),
+						]))
+				else:
+					# 一つずつ取得
+					for timestamp, recordId in records:
+						MessageQueue.enqueue(s, msgtype='get_record', msg=' '.join([
+							host, str(thread.id), recordId, str(timestamp),
+							]))
+			except URLError as e:
+					log.isEnabledFor(logging.INFO) and log.info('getThread: Fail {} {} {}'.format(thread.id, url, str(e)))
+
 		s.commit()
 		notify()
 

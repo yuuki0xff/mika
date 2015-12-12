@@ -59,7 +59,8 @@ class Thread(Base):
 		return query
 	@classmethod
 	def getFileName(cls, title):
-		return 'thread_' + b2a_hex(title.encode('utf-8')).decode('utf-8')
+		# 16進数表現のA-Fは大文字でなければならない
+		return 'thread_' + b2a_hex(title.encode('utf-8')).decode('utf-8').upper()
 	@classmethod
 	def gets(cls, session, **kwargs):
 		query = session.query(cls)

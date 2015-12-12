@@ -9,6 +9,7 @@ from random import shuffle
 import core.settings as settings
 import logging
 import time
+import sqlalchemy.exc
 log = logging.getLogger(__name__)
 
 def getRecord(msg):
@@ -35,14 +36,22 @@ def getRecord(msg):
 			http_addr = 'http://{}/get/{}/{}'.format(addr, filename, timeRange)
 		try:
 			for record in str2recordInfo(httpGet(http_addr)):
-				timestamp, hex_id, body = record
-				bin_id = a2b_hex(hex_id)
-				timestamp = int(timestamp)
-				if Record.get(s, thread_id, bin_id, timestamp).first():
+				try:
+					timestamp, hex_id, body = record
+					bin_id = a2b_hex(hex_id)
+				except binascii.Error:
 					continue
-				Record.add(s, thread_id, timestamp, bin_id, body)
-				log.isEnabledFor(logging.INFO) and log.info('getRecord: Add {}/{}/{} {}'.format(thread_id, timestamp, b2a_hex(bin_id), addr))
-			s.commit()
+				try:
+					timestamp = int(timestamp)
+					if Record.get(s, thread_id, bin_id, timestamp).first():
+						continue
+					Record.add(s, thread_id, timestamp, bin_id, body)
+					log.isEnabledFor(logging.INFO) and log.info('getRecord: Add {}/{}/{} {}'.format(thread_id, timestamp, b2a_hex(bin_id), addr))
+					s.commit()
+				except (binascii.Error, sqlalchemy.exc.StatementError):
+					s.rollback()
+					Record.delete(s, thread_id, timestamp, bin_id)
+					s.commit()
 		except URLError as e:
 			log.isEnabledFor(logging.INFO) and log.info('getRecord: Fail {} {} {}'.format(thread_id, http_addr, str(e)))
 			return False
@@ -134,10 +143,8 @@ def getThread(msg):
 		if thread is None:
 			return
 
-		firstTime = int(time.mktime(Record.getLastTime(s, thread.id).timetuple()))
-		lastTime = int(time.mktime(Record.getFirstTime(s, thread.id).timetuple()))
-		log.info(str(firstTime)+' '+str(lastTime))
-		return
+		lastTime = int(time.mktime(Record.getLastTime(s, thread.id).timetuple()))
+		firstTime = int(time.mktime(Record.getFirstTime(s, thread.id).timetuple()))
 
 		# 最新のレコードと、より古いレコードを取得する
 		MessageQueue.enqueue(s, msgtype='get_record', msg=' '.join([
@@ -155,8 +162,8 @@ def getThread(msg):
 			# 30%未満なら、一つずつ取得
 			url = 'http://{}/head/{}/{}-{}'.format(
 					host, fileName,
-					str(Record.getFirstTime(s, thread.id)),
-					str(Record.getLastTime(s, thread.id)),
+					str(firstTime),
+					str(lastTime),
 					)
 			records = []
 			notExistsRecordCount = 0
@@ -184,11 +191,13 @@ def getThread(msg):
 								host, str(thread.id),
 								str(records[0][0]) + '-' + str(records[-1][0]),
 								]))
-							records = newRecords
+							records = [newRecords]
 							notExistsRecordCount = 1
 							existsRecordCount = 0
 
-				if rate >= 0.3:
+				if rate is None:
+					pass
+				elif rate >= 0.3:
 					# まとめて取得
 					MessageQueue.enqueue(s, msgtype='get_record', msg=' '.join([
 						host, str(thread.id),

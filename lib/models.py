@@ -159,6 +159,26 @@ class Record(Base):
 			rec.target = fields.get('target')
 
 		session.add(rec)
+	@classmethod
+	def delete(cls, session, thread_id, timestamp, bin_id, force=False):
+		rec = cls.get(session, thread_id, bin_id, timestamp).first()
+		if rec:
+			session.delete(rec)
+		if force or rec:
+			session.add(RemovedRecord(thread_id=thread_id, timestamp=timestamp, bin_id=bin_id))
+
+class RemovedRecord(Base):
+	__tablename__ = 'record_removed'
+	__table_args__ = {'autoload': True}
+
+	def get(cls, session, thread_id, bin_id, timestamp):
+		return session.query(cls)\
+				.filter(
+					cls.thread_id == thread_id,
+					cls.bin_id == bin_id,
+					cls.timestamp == datetime.fromtimestamp(timestamp)
+					)
+
 
 class Tagname(Base):
 	__tablename__ = 'tagname'

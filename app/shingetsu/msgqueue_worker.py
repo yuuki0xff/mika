@@ -186,6 +186,11 @@ def _joinNetwork_joinWorker(host):
 def _joinNetwork_doByeByeWorker(host):
 	try:
 		httpGet('http://' + host + '/bye/' + settings.NODE_NAME)
+		with Session() as s:
+			node = Node.getThisNode(s, host).first()
+			if node:
+				node.linked = False
+			s.commit()
 	except URLError:
 		pass
 

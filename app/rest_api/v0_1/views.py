@@ -1,8 +1,9 @@
 
 from django.views.generic import View
 from django.http import JsonResponse, HttpResponse, HttpResponseNotFound, HttpResponseBadRequest
-from lib.models import Session, Thread, Record
+from lib.models import Session, Thread, Record, MessageQueue
 from lib.utils import datetime2timestamp
+from lib.msgqueue import notify
 from sqlalchemy.sql import func as sql_func
 from binascii import a2b_hex, b2a_hex
 from app.shingetsu.utils import makeRecordStr, str2recordInfo
@@ -46,9 +47,11 @@ class threads(View):
 			query = Thread.get(s, title=title).all()
 			if len(query) == 0:
 				thread = Thread.add(s, title)
+				MessageQueue.enqueue(s, msgtype='get_thread', msg=Thread.getFileName(title))
+				s.commit()
+				notify()
 			else:
 				thread = query[0]
-			s.commit()
 			return JsonResponse({
 				'thread': {
 					"id": thread.id,

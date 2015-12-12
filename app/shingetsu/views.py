@@ -6,6 +6,7 @@ from app.shingetsu.utils import splitFileName, record2str, getTimeRange
 from app.shingetsu import msgqueue
 from binascii import a2b_hex
 from lib.utils import datetime2timestamp
+from core import settings
 
 __all__ = 'ping node join bye have get head update recent'.split()
 
@@ -42,7 +43,7 @@ class join(View):
 				welcome = True
 				thisNode.linked = True
 				s.commit()
-			elif linkedNodeCount < 5:
+			elif linkedNodeCount < settings.MAX_NODES:
 				welcome = True
 				s.add(Node(host=addr, linked=True))
 				s.commit()

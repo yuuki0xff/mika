@@ -136,9 +136,9 @@ def doPing(msg):
 
 def _joinNetwork_findNodeWorker(host):
 	try:
-		newHost = httpGet('http://' + host + '/node')
+		newHost = httpGet('http://' + host + '/node').strip()
 		with Session() as s:
-			if Node.getThisNode(s, newHost):
+			if Node.getThisNode(s, newHost).first():
 				return
 			Node.add(s, newHost)
 			s.commit()

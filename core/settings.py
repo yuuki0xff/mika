@@ -154,22 +154,12 @@ LOGGING = {
             'level': 'WARNING',
             'propagate': False,
         },
-        'shingetsu': {
+        'app': {
             'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': False,
         },
-        'rest_api': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-        'msgqueued': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-        'msgqueue': {
+        'lib': {
             'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': False,

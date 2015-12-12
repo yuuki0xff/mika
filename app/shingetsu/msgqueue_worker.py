@@ -48,9 +48,9 @@ def getRecord(msg):
 			return False
 		return True
 
-def _updateRecord_httpGetWrapper(host, fname, time, hex_id, thread_id):
+def _updateRecord_httpGetWrapper(host, fname, time, hex_id, thread_id, nodeName):
 	try:
-		url = 'http://{}/update/{}/{}/{}/{}'.format(host, fname, time, hex_id, settings.NODE_NAME)
+		url = 'http://{}/update/{}/{}/{}/{}'.format(host, fname, time, hex_id, nodeName)
 		httpGet(url)
 		log.isEnabledFor(logging.INFO) and log.info('updateRecord: Success {}/{}/{} {}'.format(thread_id, time, hex_id, host,))
 		return True
@@ -60,22 +60,17 @@ def _updateRecord_httpGetWrapper(host, fname, time, hex_id, thread_id):
 
 def updateRecord(msg):
 	with Session() as s:
-		addr, thread_id, hex_id, atime = msg.msg.split()
+		thread_id, hex_id, atime, nodeName = msg.msg.split()
 		thread_id = int(thread_id)
-		bin_id = a2b_hex(hex_id)
 		atime = int(atime)
 		filename = Thread.getFileName(Thread.get(s, id=thread_id).value(Thread.title))
-
-		if Record.get(s, thread_id, bin_id, atime).value(Record.record_id) is None:
-			log.isEnabledFor(logging.INFO) and log.info('updateRecord: Skip {}/{}/{} {}'.format(thread_id, atime, hex_id, addr))
-			return False
 
 		queue = Queue()
 		for host in Node.getLinkedNode(s).values(Node.host):
 			queue.put((
-				host.host, filename, atime, hex_id, thread_id,
+				host.host, filename, atime, hex_id, thread_id, nodeName
 				))
-	log.isEnabledFor(logging.INFO) and log.info('updateRecord: Run {}/{}/{} {}'.format(thread_id, atime, hex_id, addr))
+	log.isEnabledFor(logging.INFO) and log.info('updateRecord: Run {}/{}/{} {}'.format(thread_id, atime, hex_id, nodeName))
 	multiThread(_updateRecord_httpGetWrapper, queue, maxWorkers=settings.MAX_CONNECTIONS)
 	return True
 

@@ -3,6 +3,7 @@ from lib.models import Session, Thread, Record, Node, MessageQueue
 from lib.msgqueue import multiThread, notify
 from urllib.error import URLError
 from binascii import a2b_hex, b2a_hex
+import binascii
 from queue import Queue
 from random import shuffle
 import core.settings as settings
@@ -84,7 +85,11 @@ def _getRecent_worker(host):
 			fileNames.append(fileName)
 
 		for fileName in sorted(fileNames):
-			thread = Thread.get(s, title=a2b_hex(fileName.split('_')[1])).first()
+			try:
+				threadTitle = a2b_hex(fileName.split('_')[1])
+			except (ValueError, binascii.Error):
+				continue
+			thread = Thread.get(s, title=threadTitle).first()
 			if thread is None:
 				continue
 			log.isEnabledFor(logging.INFO) and log.info('getRecent: found {} {}'.format(thread.id, host))

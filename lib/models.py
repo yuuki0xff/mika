@@ -30,6 +30,7 @@ __all__ = "Session".split()
 tableNames = [
 		'Thread',
 		'Record',
+		'Recent',
 		'Tagname',
 		'Tag',
 		'Node',
@@ -181,6 +182,28 @@ class RemovedRecord(Base):
 					cls.timestamp == datetime.fromtimestamp(timestamp)
 					)
 
+class Recent(Base):
+	__tablename__ = 'recent'
+	__table_args__ = {'autoload': True}
+
+	@classmethod
+	def gets(cls, session, stime=None, etime=None):
+		query = session.query(cls)
+		if stime:
+			query = query.filter(cls.timestamp >= stime)
+		if etime:
+			query = query.filter(cls.timestamp <= etime)
+		return query
+	@classmethod
+	def get(cls, session, timestamp, binId, fileName):
+		return session.query(cls).filter(
+				cls.timestamp == timestamp,
+				cls.bin_id == binId,
+				cls.file_name == fileName,
+				)
+	@classmethod
+	def add(cls, session, timestamp, binId, fileName):
+		session.add(Recent(timestamp=datetime.fromtimestamp(timestamp), bin_id=binId, file_name=fileName))
 
 class Tagname(Base):
 	__tablename__ = 'tagname'

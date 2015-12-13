@@ -57,6 +57,14 @@ CREATE TABLE record_removed(
 	FOREIGN KEY(thread_id) REFERENCES thread(id)
 );
 
+CREATE TABLE recent(
+	id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+	timestamp TIMESTAMP,
+	bin_id BINARY(16),
+	file_name CHAR(255),
+	UNIQUE INDEX(timestamp, bin_id, file_name)
+);
+
 CREATE TABLE tagname(
 	id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 	name VARCHAR(1024) NOT NULL

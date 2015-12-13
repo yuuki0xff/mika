@@ -46,6 +46,7 @@ def dispatcher(workerFunc):
 					except KeyboardInterrupt:
 						return
 					continue
+				log.isEnabledFor(logging.DEBUG) and log.debug(' '.join([msg.getTypeName(s), msg.msg]))
 				worker = workerFunc.get(msg.getTypeName(s))
 				try:
 					worker(msg)

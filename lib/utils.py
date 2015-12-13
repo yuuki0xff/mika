@@ -16,7 +16,7 @@ def str2timestamp(s):
 def datetime2timestamp(dt):
 	if dt is None:
 		return 0
-	return time.mktime(dt.timetuple())
+	return int(time.mktime(dt.timetuple()))
 
 def timestamp2datetime(ts):
 	return datetime.fromtimestamp(ts)

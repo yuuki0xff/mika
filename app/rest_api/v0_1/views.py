@@ -1,7 +1,7 @@
 
 from django.views.generic import View
 from django.http import JsonResponse, HttpResponse, HttpResponseNotFound, HttpResponseBadRequest
-from lib.models import Session, Thread, Record, MessageQueue
+from lib.models import Session, Thread, Record, Recent, MessageQueue
 from lib.utils import datetime2timestamp
 from lib.msgqueue import notify
 from sqlalchemy.sql import func as sql_func
@@ -148,6 +148,8 @@ class records(View):
 		bin_id = a2b_hex(bin_id_hex)
 		with Session() as s:
 			Record.add(s, thread_id, timestamp, bin_id, body)
+			threadTitle = Thread.get(s, id=thread_id).value(Thread.title)
+			Recent.add(s, timestamp, bin_id, Thread.getFileName(threadTitle))
 			s.commit()
 
 		msgqueue.updateRecord(thread_id, bin_id_hex, timestamp)

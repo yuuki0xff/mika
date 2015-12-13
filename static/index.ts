@@ -433,6 +433,14 @@ module Controllers{
 		setCurrentThread(thread){
 			this.$scope.currentThread = thread;
 			this.switchMainView(MainViewType.thread);
+			if(this.$scope.currentThread){
+				this.$scope.currentThread.reload({
+					"success": ()=>{
+						this.$scope.$apply();
+					},
+					"error": ()=>{return;},
+				});
+			}
 		}
 		switchMainView(viewType:MainViewType){
 			this.$scope.mainView = viewType;

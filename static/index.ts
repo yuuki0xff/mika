@@ -1,6 +1,33 @@
 /// <reference path="./typings/jquery/jquery.d.ts" />
 /// <reference path="./typings/angularjs/angular.d.ts" />
 
+module Security{
+	export interface Sanitizer{
+		clean_string(s:string): string;
+	}
+
+	export class RecordSanitizer implements Sanitizer{
+		sanitizer: any;
+		domParser: any;
+
+		constructor(private $sce){
+			var config = {
+				elements: "br".split(" "),
+			};
+			this.sanitizer = new Sanitize(config);
+			this.domParser = new DOMParser();
+		}
+
+		clean_string(s:string): string{
+			var dirtyDom = this.domParser.parseFromString(s, "text/html");
+			var cleanNode = this.sanitizer.clean_node(dirtyDom);
+			var cleanDom = document.implementation.createHTMLDocument("");
+			cleanDom.body.appendChild(cleanNode);
+			return this.$sce.trustAsHtml(cleanDom.body.innerHTML);
+		}
+	}
+}
+
 module API{
 	/****************************************************************
  	 * 列挙型
@@ -200,13 +227,16 @@ module Models{
 		mail:string;
 		body:string;
 		attach:boolean;
+		htmlBody:string;
 
-		constructor(thread_id:number, record:any){
+		constructor(thread_id:number, record:any, sanitizer){
 			super(thread_id, record);
 			this.name = record.name;
 			this.mail = record.mail;
 			this.body = record.body;
 			this.attach = record.attach;
+
+			this.htmlBody = sanitizer.clean_string(this.body);
 		}
 	}
 
@@ -214,7 +244,7 @@ module Models{
 		thread_id:number;
 		private records:Array<IRecord>;
 
-		constructor(thread:IThreadInfo, public filter:Models.Filters.IRecordListFilter=undefined){
+		constructor(thread:IThreadInfo, public filter:Models.Filters.IRecordListFilter=undefined, private sanitizer){
 			this.thread_id = thread.id;
 		}
 
@@ -227,7 +257,7 @@ module Models{
 		private converter(json):Array<Record>{
 			var records = [];
 			for(var i in json.records){
-				records.push(new Record(this.thread_id, json.records[i]));
+				records.push(new Record(this.thread_id, json.records[i], this.sanitizer));
 			}
 			return records;
 		}
@@ -285,9 +315,9 @@ module Models{
 	export class Thread extends ThreadInfo implements IThread{
 		recordList:IRecordList;
 
-		constructor(thread:IThreadInfo){
+		constructor(thread:IThreadInfo, private sanitizer){
 			super(<IThreadInfo>thread);
-			this.recordList = new RecordList(this);
+			this.recordList = new RecordList(this, null, sanitizer);
 		}
 
 		post(rec:IRecord, callback:API.IAjaxCallback){
@@ -311,7 +341,7 @@ module Models{
 	export class ThreadList implements IThreadList{
 		private threads:Array<IThread> = [];
 
-		constructor(public filter:Models.Filters.IThreadListFilter=undefined){}
+		constructor(public filter:Models.Filters.IThreadListFilter=undefined, private sanitizer){}
 
 		getAll(): IThread[]{
 			return this.threads;
@@ -325,11 +355,11 @@ module Models{
 			if(json.threads){
 				for(var i in json.threads){
 					var th = json.threads[i];
-					threads.push(new Thread(th));
+					threads.push(new Thread(th, this.sanitizer));
 				}
 			}else if(json.thread){
 					var th = json.thread;
-				threads.push(new Thread(th));
+				threads.push(new Thread(th, this.sanitizer));
 			}
 			return threads;
 		}
@@ -402,14 +432,16 @@ module Controllers{
 	}
 
 	export class MikaCtrl{
-		constructor(private $scope:IScope){
+		constructor(private $scope:IScope, $sce){
 			$scope.MainViewType = MainViewType;
 			$scope.mainView = MainViewType.thread;
 
 			$scope.setCurrentThread = (thread:Models.Thread)=>{this.setCurrentThread(thread);};
 			$scope.switchMainView = (viewType:MainViewType)=>{this.switchMainView(viewType);};
 
-			var tl = new Models.ThreadList();
+			var recordSanitizer = new Security.RecordSanitizer($sce);
+
+			var tl = new Models.ThreadList(null, recordSanitizer);
 			tl.reload({
 				"success": ()=>{
 					$scope.threads = tl;
@@ -508,7 +540,7 @@ module Controllers{
 	}
 }
 
-angular.module("mika", [])
+angular.module("mika", ["ngSanitize"])
 .controller("MikaCtrl", Controllers.MikaCtrl)
 .controller("MenuCtrl", Controllers.MenuCtrl)
 .controller("ThreadCtrl", Controllers.ThreadCtrl);

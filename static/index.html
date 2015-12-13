@@ -45,7 +45,7 @@
 			<div class='record_list'>
 				<div ng-repeat='record in currentThread.recordList.records'>
 					<div class='header'>
-						<span class='id'>{{record.id}}</span>
+						<span class='id'>{{record.record_id | limitTo: 8}}</span>
 						<span class='name'>{{record.name}}</span>
 						[<span class='mail'>{{record.mail}}</span>]
 						<span class='datetime'>{{record.timestamp * 1000 | date:'yyyy-MM-dd HH:mm:ss'}}</span>

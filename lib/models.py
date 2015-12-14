@@ -174,7 +174,7 @@ class RemovedRecord(Base):
 	__table_args__ = {'autoload': True}
 
 	@classmethod
-	def get(cls, session, thread_id, bin_id, timestamp):
+	def get(cls, session, thread_id, timestamp, bin_id):
 		return session.query(cls)\
 				.filter(
 					cls.thread_id == thread_id,

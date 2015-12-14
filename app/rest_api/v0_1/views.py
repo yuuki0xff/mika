@@ -14,10 +14,14 @@ class threads(View):
 	def get(self, request, *args, **kwargs):
 		threads = []
 		gets_kwargs = {}
-		if 'limit' in request.GET:  gets_kwargs['limit'] = int(request.GET.get('limit', -1))
-		if 'start_time' in request.GET:  gets_kwargs['stime'] = int(request.GET.get('start_time'))
-		if 'end_time' in request.GET:  gets_kwargs['etime'] = int(request.GET.get('end_time'))
-		if 'title' in request.GET:  gets_kwargs['title'] = request.GET.get('title')
+		if 'limit' in request.GET:
+			gets_kwargs['limit'] = int(request.GET.get('limit', -1))
+		if 'start_time' in request.GET:
+			gets_kwargs['stime'] = int(request.GET.get('start_time'))
+		if 'end_time' in request.GET:
+			gets_kwargs['etime'] = int(request.GET.get('end_time'))
+		if 'title' in request.GET:
+			gets_kwargs['title'] = request.GET.get('title')
 
 		with Session() as s:
 			for t in Thread.gets(s, **gets_kwargs):
@@ -33,7 +37,8 @@ class threads(View):
 		return JsonResponse(obj)
 	def head(self, request, *args, **kwargs):
 		gets_kwargs = {}
-		if 'title' in request.GET:  gets_kwargs['title'] = request.GET.get('title')
+		if 'title' in request.GET:
+			gets_kwargs['title'] = request.GET.get('title')
 
 		with Session() as s:
 			for t in Thread.gets(s, **gets_kwargs):
@@ -64,7 +69,6 @@ class threads(View):
 class records(View):
 	def get(self, request, *args, **kwargs):
 		records = []
-#         limit = int(request.GET.get('limit', -1))
 
 		thread_id = int(kwargs['thread_id'])
 		with Session() as s:

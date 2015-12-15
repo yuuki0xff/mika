@@ -38,6 +38,7 @@ def dispatcher(workerFunc):
 		except FileNotFoundError:
 			pass
 		sock.bind(settings.MESSAGE_QUEUE_SOCK_FILE)
+		sock.settimeout(10)
 		sock.listen(1)
 		while True:
 			try:
@@ -51,6 +52,8 @@ def dispatcher(workerFunc):
 						conn.close()
 					except KeyboardInterrupt:
 						return
+					except socket.timeout:
+						pass
 					continue
 				log.isEnabledFor(logging.DEBUG) and log.debug(' '.join([msg.getTypeName(s), msg.msg]))
 				worker = workerFunc.get(msg.getTypeName(s))

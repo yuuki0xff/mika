@@ -94,7 +94,7 @@ class Record(Base):
 	__table_args__ = {'autoload': True}
 
 	@classmethod
-	def gets(cls, session, thread_id, stime=None, etime=None, bin_id=None):
+	def gets(cls, session, thread_id, stime=None, etime=None, bin_id=None, sort=True):
 		allRecords = session.query(Record).filter(Record.thread_id == thread_id)
 		if stime is not None:
 			Record.timestamp >= timestamp2datetime(stime)
@@ -107,6 +107,9 @@ class Record(Base):
 			allRecords = allRecords.filter(Record.timestamp <= timestamp2datetime(etime))
 		if bin_id is not None:
 			allRecords = allRecords.filter(Record.bin_id == bin_id)
+
+		if sort:
+			allRecords = allRecords.order_by(cls.timestamp)
 		return allRecords
 	@classmethod
 	def get(cls, session, thread_id, bin_id, timestamp):

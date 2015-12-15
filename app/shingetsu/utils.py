@@ -1,5 +1,6 @@
 
 from lib.models import Record
+from lib.utils import datetime2timestamp
 import time
 from base64 import b64encode
 from datetime import datetime
@@ -15,18 +16,18 @@ log = logging.getLogger(__name__)
 def splitFileName(fname):
 	return fname.split('_', 2)
 
-def record2str(query, include_body=1):
+def record2str(query, include_body=True):
 	if not include_body:
 		query = query.with_entities(Record.bin_id, Record.timestamp, Record.raw_body)
 	for r in query:
 		if not include_body:
 			yield '<>'.join((
-					str(int(time.mktime(r.timestamp.timetuple()))),
+					str(datetime2timestamp(r.timestamp)),
 					str(b2a_hex(r.bin_id).decode('utf-8')),
 				))+'\n'
 			continue
 		yield '<>'.join((
-				str(int(time.mktime(r.timestamp.timetuple()))),
+				str(datetime2timestamp(r.timestamp.timetuple())),
 				str(b2a_hex(r.bin_id).decode('utf-8')),
 				r.raw_body,
 			))+'\n'

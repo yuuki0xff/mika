@@ -57,7 +57,7 @@ def dispatcher(workerFunc):
 				try:
 					worker(msg)
 				except Exception:
-					log.error(''.join([
+					log.error('\n'.join([
 						'Worker died.',
 						traceback.format_exc(),
 						]))

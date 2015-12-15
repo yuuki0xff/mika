@@ -236,6 +236,8 @@ module Models{
 			this.body = record.body;
 			this.attach = record.attach;
 
+			this.htmlName = sanitizer.clean_string(this.name);
+			this.htmlMail = sanitizer.clean_string(this.mail);
 			this.htmlBody = sanitizer.clean_string(this.body);
 		}
 	}

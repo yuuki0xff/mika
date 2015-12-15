@@ -4,6 +4,7 @@ from django.http import JsonResponse, HttpResponse, HttpResponseNotFound, HttpRe
 from lib.models import Session, Thread, Record, Recent, MessageQueue
 from lib.utils import datetime2timestamp
 from lib.msgqueue import notify
+from app.shingetsu.error import BadRecordException
 from sqlalchemy.sql import func as sql_func
 from binascii import a2b_hex, b2a_hex
 from app.shingetsu.utils import makeRecordStr, str2recordInfo
@@ -147,7 +148,10 @@ class records(View):
 			return HttpResponseBadRequest()
 
 		timestamp = time.time()
-		recStr = makeRecordStr(timestamp, name, mail, body, attach, attach_sfx)
+		try:
+			recStr = makeRecordStr(timestamp, name, mail, body, attach, attach_sfx)
+		except BadRecordException:
+			return HttpResponseBadRequest()
 		_, bin_id_hex, body = tuple(str2recordInfo(recStr))[0]
 		bin_id = a2b_hex(bin_id_hex)
 		with Session() as s:

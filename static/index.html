@@ -46,8 +46,8 @@
 				<div ng-repeat='record in currentThread.recordList.records'>
 					<div class='header'>
 						<span class='id'>{{record.record_id | limitTo: 8}}</span>
-						<span class='name'>{{record.name}}</span>
-						[<span class='mail'>{{record.mail}}</span>]
+						<span ng-bind-html='record.htmlName' class='name'></span>
+						[<span ng-bind-html='record.htmlMail' class='mail'></span>]
 						<span class='datetime'>{{record.timestamp * 1000 | date:'yyyy-MM-dd HH:mm:ss'}}</span>
 					</div>
 					<p ng-bind-html='record.htmlBody' class='body'></p>

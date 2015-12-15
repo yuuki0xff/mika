@@ -73,22 +73,29 @@ def str2recordInfo(string):
 		yield record.split('<>', 2)
 
 def makeRecordStr(timestamp, name, mail, body, attach=None, suffix=None):
+	def htmlEscape(s):
+		return s.replace('&', '&amp;')\
+				.replace('<', '&lt;')\
+				.replace('>', '&gt;')
+
 	dic = {}
 	if name:
-		dic['name'] = name
+		dic['name'] = htmlEscape(name.strip())
 	if mail:
-		dic['mail'] = mail
+		dic['mail'] = htmlEscape(mail.strip())
 	if not body:
 		raise BadRecordException()
-	dic['body'] = body
+	dic['body'] = htmlEscape(body.strip()).replace('\n', '<br>')
 
 	if attach:
 		dic['attach'] = b64encode(attach)
-		dic['suffix'] = suffix
+		dic['suffix'] = htmlEscape(suffix.strip())
 
 	arr = []
 	for key in dic.keys():
-		val = str(dic[key]).replace('<', '&lt;').replace('>', '&gt;')
+		val = str(dic[key])
+		if '\n' in key or '\n' in val or '<>' in key:
+			raise BadRecordException()
 		arr.append(str(key) +":"+ val)
 
 	record_body = '<>'.join(arr)

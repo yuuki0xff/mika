@@ -31,7 +31,7 @@ def record2str(query, include_body=True):
 				))+'\n'
 			continue
 		yield '<>'.join((
-				str(datetime2timestamp(r.timestamp.timetuple())),
+				str(datetime2timestamp(r.timestamp)),
 				str(b2a_hex(r.bin_id).decode('utf-8')),
 				r.raw_body,
 			))+'\n'
@@ -42,7 +42,7 @@ def getTimeRange(atime, starttime, endtime):
 	if starttime:
 		if endtime:
 			return (int(starttime), int(endtime))
-		now = time.mktime(datetime.now().timetuple())
+		now = datetime2timestamp(datetime.now())
 		return (int(starttime), now)
 	if endtime:
 		return (0, int(endtime))

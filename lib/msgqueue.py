@@ -11,7 +11,13 @@ log = logging.getLogger(__name__)
 def _multiThreadWorker(worker, queue):
 	while not queue.empty():
 		args = queue.get()
-		worker(*args)
+		try:
+			worker(*args)
+		except Exception:
+			log.isEnabledFor(logging.ERROR) and log.error(
+					'_multiThreadWorker: worker died.\n' +
+					traceback.format_exc()
+					)
 
 def multiThread(worker, queue, maxWorkers=settings.MAX_THREADS, daemon=True, join=True):
 	threads = []
@@ -32,6 +38,7 @@ def dispatcher(workerFunc):
 		except FileNotFoundError:
 			pass
 		sock.bind(settings.MESSAGE_QUEUE_SOCK_FILE)
+		sock.settimeout(10)
 		sock.listen(1)
 		while True:
 			try:
@@ -45,12 +52,15 @@ def dispatcher(workerFunc):
 						conn.close()
 					except KeyboardInterrupt:
 						return
+					except socket.timeout:
+						pass
 					continue
+				log.isEnabledFor(logging.DEBUG) and log.debug(' '.join([msg.getTypeName(s), msg.msg]))
 				worker = workerFunc.get(msg.getTypeName(s))
 				try:
 					worker(msg)
 				except Exception:
-					log.error(''.join([
+					log.error('\n'.join([
 						'Worker died.',
 						traceback.format_exc(),
 						]))
@@ -66,7 +76,7 @@ def notify():
 		s.settimeout(0)
 		try:
 			s.connect(settings.MESSAGE_QUEUE_SOCK_FILE)
-		except:
+		except Exception:
 			pass
 
 def messageScheduler(msgtype, msg='', interval=0, wait=0):

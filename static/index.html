@@ -45,12 +45,12 @@
 			<div class='record_list'>
 				<div ng-repeat='record in currentThread.recordList.records'>
 					<div class='header'>
-						<span class='id'>{{record.id}}</span>
-						<span class='name'>{{record.name}}</span>
-						[<span class='mail'>{{record.mail}}</span>]
+						<span class='id'>{{record.record_id | limitTo: 8}}</span>
+						<span ng-bind-html='record.htmlName' class='name'></span>
+						[<span ng-bind-html='record.htmlMail' class='mail'></span>]
 						<span class='datetime'>{{record.timestamp * 1000 | date:'yyyy-MM-dd HH:mm:ss'}}</span>
 					</div>
-					<p class='body'>{{record.body}}</p>
+					<p ng-bind-html='record.htmlBody' class='body'></p>
 				</div>
 			</div>
 			<div class='post'>
@@ -66,6 +66,8 @@
 
 	<script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js'></script>
 	<script src='https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.8/angular.min.js'></script>
+	<script src='https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.8/angular-sanitize.min.js'></script>
+	<script src='./lib/sanitize.js'></script>
 	<script src='./index.js'></script>
 </div>
 </html>

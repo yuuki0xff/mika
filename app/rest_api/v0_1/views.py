@@ -1,9 +1,10 @@
 
 from django.views.generic import View
 from django.http import JsonResponse, HttpResponse, HttpResponseNotFound, HttpResponseBadRequest
-from lib.models import Session, Thread, Record, MessageQueue
+from lib.models import Session, Thread, Record, Recent, MessageQueue
 from lib.utils import datetime2timestamp
 from lib.msgqueue import notify
+from app.shingetsu.error import BadRecordException
 from sqlalchemy.sql import func as sql_func
 from binascii import a2b_hex, b2a_hex
 from app.shingetsu.utils import makeRecordStr, str2recordInfo
@@ -14,10 +15,14 @@ class threads(View):
 	def get(self, request, *args, **kwargs):
 		threads = []
 		gets_kwargs = {}
-		if 'limit' in request.GET:  gets_kwargs['limit'] = int(request.GET.get('limit', -1))
-		if 'start_time' in request.GET:  gets_kwargs['stime'] = int(request.GET.get('start_time'))
-		if 'end_time' in request.GET:  gets_kwargs['etime'] = int(request.GET.get('end_time'))
-		if 'title' in request.GET:  gets_kwargs['title'] = request.GET.get('title')
+		if 'limit' in request.GET:
+			gets_kwargs['limit'] = int(request.GET.get('limit', -1))
+		if 'start_time' in request.GET:
+			gets_kwargs['stime'] = int(request.GET.get('start_time'))
+		if 'end_time' in request.GET:
+			gets_kwargs['etime'] = int(request.GET.get('end_time'))
+		if 'title' in request.GET:
+			gets_kwargs['title'] = request.GET.get('title')
 
 		with Session() as s:
 			for t in Thread.gets(s, **gets_kwargs):
@@ -33,7 +38,8 @@ class threads(View):
 		return JsonResponse(obj)
 	def head(self, request, *args, **kwargs):
 		gets_kwargs = {}
-		if 'title' in request.GET:  gets_kwargs['title'] = request.GET.get('title')
+		if 'title' in request.GET:
+			gets_kwargs['title'] = request.GET.get('title')
 
 		with Session() as s:
 			for t in Thread.gets(s, **gets_kwargs):
@@ -64,7 +70,6 @@ class threads(View):
 class records(View):
 	def get(self, request, *args, **kwargs):
 		records = []
-#         limit = int(request.GET.get('limit', -1))
 
 		thread_id = int(kwargs['thread_id'])
 		with Session() as s:
@@ -143,11 +148,16 @@ class records(View):
 			return HttpResponseBadRequest()
 
 		timestamp = time.time()
-		recStr = makeRecordStr(timestamp, name, mail, body, attach, attach_sfx)
+		try:
+			recStr = makeRecordStr(timestamp, name, mail, body, attach, attach_sfx)
+		except BadRecordException:
+			return HttpResponseBadRequest()
 		_, bin_id_hex, body = tuple(str2recordInfo(recStr))[0]
 		bin_id = a2b_hex(bin_id_hex)
 		with Session() as s:
 			Record.add(s, thread_id, timestamp, bin_id, body)
+			threadTitle = Thread.get(s, id=thread_id).value(Thread.title)
+			Recent.add(s, timestamp, bin_id, Thread.getFileName(threadTitle))
 			s.commit()
 
 		msgqueue.updateRecord(thread_id, bin_id_hex, timestamp)

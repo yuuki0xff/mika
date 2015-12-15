@@ -1,10 +1,12 @@
 
 from django.views.generic import View
-from django.http import HttpResponse
-from lib.models import Session, Node, Thread, Record, Tag, Tagname
+from django.http import HttpResponse, HttpResponseBadRequest
+from lib.models import Session, Node, Thread, Record, Recent
 from app.shingetsu.utils import splitFileName, record2str, getTimeRange
+from app.shingetsu.error import BadFileNameException, BadTimeRange
 from app.shingetsu import msgqueue
-from binascii import a2b_hex
+from binascii import a2b_hex, b2a_hex
+import binascii
 from lib.utils import datetime2timestamp
 from core import settings
 
@@ -73,10 +75,17 @@ class bye(View):
 class have(View):
 	def dispatch(self, request, *args, **kwargs):
 		with Session() as s:
-			prefix, basename = kwargs['file'].split('_')
+			try:
+				prefix, basename = splitFileName(kwargs['file'])
+			except BadFileNameException:
+				return HttpResponseBadRequest()
+
 			response = HttpResponse()
 			if prefix=='thread':
-				title = a2b_hex(basename)
+				try:
+					title = a2b_hex(basename)
+				except (TypeError, binascii.Error):
+					return HttpResponseBadRequest()
 				if Thread.get(s, title=title).value(Thread.id):
 					response.write('YES')
 					return response
@@ -86,15 +95,22 @@ class have(View):
 class get(View):
 	def dispatch(self, request, *args, **kwargs):
 		with Session() as s:
-			prefix, basename = splitFileName(kwargs['file'])
-			stime, etime = getTimeRange(
-					kwargs.get('time'),
-					kwargs.get('stime'),
-					kwargs.get('etime'),
-					)
+			try:
+				prefix, basename = splitFileName(kwargs['file'])
+				stime, etime = getTimeRange(
+						kwargs.get('time'),
+						kwargs.get('stime'),
+						kwargs.get('etime'),
+						)
+			except (BadFileNameException, BadTimeRange):
+				return HttpResponseBadRequest()
+
 			response = HttpResponse()
 			if prefix=='thread':
-				title = a2b_hex(basename)
+				try:
+					title = a2b_hex(basename)
+				except binascii.Error:
+					return HttpResponseBadRequest()
 				thread_id = Thread.get(s, title=title).value(Thread.id)
 				allRecords = Record.gets(s, thread_id, stime, etime)
 				for line in record2str(allRecords, 1):
@@ -104,15 +120,22 @@ class get(View):
 class head(View):
 	def dispatch(self, request, *args, **kwargs):
 		with Session() as s:
-			prefix, basename = splitFileName(kwargs['file'])
-			stime, etime = getTimeRange(
-					kwargs.get('time'),
-					kwargs.get('stime'),
-					kwargs.get('etime'),
-					)
+			try:
+				prefix, basename = splitFileName(kwargs['file'])
+				stime, etime = getTimeRange(
+						kwargs.get('time'),
+						kwargs.get('stime'),
+						kwargs.get('etime'),
+						)
+			except (BadFileNameException, BadTimeRange):
+				return HttpResponseBadRequest()
+
 			response = HttpResponse()
 			if prefix=='thread':
-				title = a2b_hex(basename)
+				try:
+					title = a2b_hex(basename)
+				except binascii.Error:
+					return HttpResponseBadRequest()
 				thread_id = Thread.get(s, title=title).value(Thread.id)
 				allRecords = Record.gets(s, thread_id, stime, etime)
 				for line in record2str(allRecords, 0):
@@ -122,47 +145,53 @@ class head(View):
 class update(View):
 	def dispatch(self, request, *args, **kwargs):
 		with Session() as s:
-			prefix, basename = splitFileName(kwargs['file'])
-			title = a2b_hex(basename)
-			atime = int(kwargs['time'])
-			id_hex = kwargs['id']
-			addr = kwargs['node'].replace('+', '/')
+			try:
+				fileName = kwargs['file']
+				prefix, basename = splitFileName(kwargs['file'])
+				title = a2b_hex(basename)
+				atime = int(kwargs['time'])
+				id_hex = kwargs['id']
+				id_bin = a2b_hex(id_hex)
+				addr = kwargs['node'].replace('+', '/')
+			except (BadFileNameException, binascii.Error, ValueError):
+				return HttpResponseBadRequest()
+
 			if addr.startswith(':') or addr.startswith('/'):
 				addr = request.META['REMOTE_ADDR'] + addr
 			response = HttpResponse()
 			if prefix=='thread':
-				thread_id = Thread.get(s, title=title).value(Thread.id)
-				if not thread_id:
+				if Recent.get(s, atime, id_bin, fileName).first():
 					return response
-				msgqueue.getAndUpdateRecord(addr, thread_id, id_hex, atime)
+				thread_id = Thread.get(s, title=title).value(Thread.id)
+				if thread_id:
+					msgqueue.getAndUpdateRecord(addr, thread_id, id_hex, atime)
+				Recent.add(s, timestamp=atime, binId=id_bin, fileName=fileName)
+				s.commit()
 			return response
 
 class recent(View):
 	def dispatch(self, request, *args, **kwargs):
 		with Session() as s:
 			response = HttpResponse()
+			queryArgs = {}
+
 			if kwargs.get('time') is not None:
-				query = Thread.gets(s, time=int(kwargs['time']))
+				queryArgs['stime'] = int(kwargs['time'])
+				queryArgs['etime'] = queryArgs['stime']
 			else:
-				args = {}
-				args['stime'] = 0
 				if kwargs.get('stime') is not None:
-					args['stime'] = int(kwargs['stime'])
+					queryArgs['stime'] = int(kwargs['stime'])
 				if kwargs.get('etime') is not None:
-					args['etime'] = int(kwargs['etime'])
-				query = Thread.gets(s, **args)
-			for thread_id, stamp, title in query.values(Thread.id, Thread.timestamp, Thread.title):
-				id = 'thread'
-				fname = Thread.getFileName(title)
-				tags = []
-				for tag in s.query(Tagname.name).filter(
-						Tag.thread_id==thread_id,
-						Tag.tag_id==Tagname.id
-						):
-					tags.append(tag)
+					queryArgs['etime'] = int(kwargs['etime'])
+
+			result = Recent.gets(s, **queryArgs).values(Recent.timestamp, Recent.bin_id, Recent.file_name)
+			for timestamp, binId, fileName in result:
+				timestamp = datetime2timestamp(timestamp)
+				hexId = b2a_hex(binId).decode('ascii')
+
 				line = '<>'.join([
-					str(datetime2timestamp(stamp)), id, fname,
-					] + tags)+'\n'
+					str(timestamp), hexId, fileName,
+					])+'\n'
 				response.write(line)
 			return response
 

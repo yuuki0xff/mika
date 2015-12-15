@@ -6,7 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from contextlib import contextmanager
 from datetime import datetime
 from binascii import a2b_hex, b2a_hex
-from lib.utils import timestamp2str
+from lib.utils import timestamp2str, timestamp2datetime, datetime2timestamp
 import time
 from core import settings
 
@@ -30,6 +30,7 @@ __all__ = "Session".split()
 tableNames = [
 		'Thread',
 		'Record',
+		'Recent',
 		'Tagname',
 		'Tag',
 		'Node',
@@ -93,19 +94,22 @@ class Record(Base):
 	__table_args__ = {'autoload': True}
 
 	@classmethod
-	def gets(cls, session, thread_id, stime=None, etime=None, bin_id=None):
+	def gets(cls, session, thread_id, stime=None, etime=None, bin_id=None, sort=True):
 		allRecords = session.query(Record).filter(Record.thread_id == thread_id)
 		if stime is not None:
-			Record.timestamp >= datetime.fromtimestamp(stime)
+			Record.timestamp >= timestamp2datetime(stime)
 			if stime == 0:
 				stime = 1
-			allRecords = allRecords.filter(Record.timestamp >= datetime.fromtimestamp(stime))
+			allRecords = allRecords.filter(Record.timestamp >= timestamp2datetime(stime))
 		if etime is not None:
 			if etime == 0:
 				etime = 1
-			allRecords = allRecords.filter(Record.timestamp <= datetime.fromtimestamp(etime))
+			allRecords = allRecords.filter(Record.timestamp <= timestamp2datetime(etime))
 		if bin_id is not None:
 			allRecords = allRecords.filter(Record.bin_id == bin_id)
+
+		if sort:
+			allRecords = allRecords.order_by(cls.timestamp)
 		return allRecords
 	@classmethod
 	def get(cls, session, thread_id, bin_id, timestamp):
@@ -113,7 +117,7 @@ class Record(Base):
 				.filter(
 					cls.thread_id == thread_id,
 					cls.bin_id == bin_id,
-					cls.timestamp == datetime.fromtimestamp(timestamp)
+					cls.timestamp == timestamp2datetime(timestamp)
 					)
 	@classmethod
 	def getFirstTime(cls, session, thread_id):
@@ -122,7 +126,7 @@ class Record(Base):
 				.order_by(Record.timestamp) \
 				.first()
 		if rec:
-			return int(time.mktime(rec.timestamp.timetuple()))
+			return int(datetime2timestamp(rec.timestamp))
 		return 0
 	@classmethod
 	def getLastTime(cls, session, thread_id):
@@ -172,7 +176,8 @@ class RemovedRecord(Base):
 	__tablename__ = 'record_removed'
 	__table_args__ = {'autoload': True}
 
-	def get(cls, session, thread_id, bin_id, timestamp):
+	@classmethod
+	def get(cls, session, thread_id, timestamp, bin_id):
 		return session.query(cls)\
 				.filter(
 					cls.thread_id == thread_id,
@@ -180,6 +185,28 @@ class RemovedRecord(Base):
 					cls.timestamp == datetime.fromtimestamp(timestamp)
 					)
 
+class Recent(Base):
+	__tablename__ = 'recent'
+	__table_args__ = {'autoload': True}
+
+	@classmethod
+	def gets(cls, session, stime=None, etime=None):
+		query = session.query(cls)
+		if stime:
+			query = query.filter(cls.timestamp >= stime)
+		if etime:
+			query = query.filter(cls.timestamp <= etime)
+		return query
+	@classmethod
+	def get(cls, session, timestamp, binId, fileName):
+		return session.query(cls).filter(
+				cls.timestamp == timestamp,
+				cls.bin_id == binId,
+				cls.file_name == fileName,
+				)
+	@classmethod
+	def add(cls, session, timestamp, binId, fileName):
+		session.add(Recent(timestamp=datetime.fromtimestamp(timestamp), bin_id=binId, file_name=fileName))
 
 class Tagname(Base):
 	__tablename__ = 'tagname'

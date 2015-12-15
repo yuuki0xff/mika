@@ -1,5 +1,7 @@
 
+from app.shingetsu.error import BadFileNameException, BadRecordException, BadTimeRange
 from lib.models import Record
+from lib.utils import datetime2timestamp
 import time
 from base64 import b64encode
 from datetime import datetime
@@ -13,20 +15,23 @@ import logging
 log = logging.getLogger(__name__)
 
 def splitFileName(fname):
-	return fname.split('_', 2)
+	result = fname.split('_', 2)
+	if len(result) != 2:
+		raise BadFileNameException()
+	return result
 
-def record2str(query, include_body=1):
+def record2str(query, include_body=True):
 	if not include_body:
 		query = query.with_entities(Record.bin_id, Record.timestamp, Record.raw_body)
 	for r in query:
 		if not include_body:
 			yield '<>'.join((
-					str(int(time.mktime(r.timestamp.timetuple()))),
+					str(datetime2timestamp(r.timestamp)),
 					str(b2a_hex(r.bin_id).decode('utf-8')),
 				))+'\n'
 			continue
 		yield '<>'.join((
-				str(int(time.mktime(r.timestamp.timetuple()))),
+				str(datetime2timestamp(r.timestamp)),
 				str(b2a_hex(r.bin_id).decode('utf-8')),
 				r.raw_body,
 			))+'\n'
@@ -37,12 +42,12 @@ def getTimeRange(atime, starttime, endtime):
 	if starttime:
 		if endtime:
 			return (int(starttime), int(endtime))
-		now = time.mktime(datetime.now().timetuple())
+		now = datetime2timestamp(datetime.now())
 		return (int(starttime), now)
-	else:
-		if endtime:
-			return (0, int(endtime))
-		raise 'ERROR'
+	if endtime:
+		return (0, int(endtime))
+	# All variable is None.
+	raise BadTimeRange()
 
 def httpGet(http_addr):
 	log.isEnabledFor(logging.DEBUG) and log.debug('HTTP_GET '+http_addr)
@@ -68,18 +73,29 @@ def str2recordInfo(string):
 		yield record.split('<>', 2)
 
 def makeRecordStr(timestamp, name, mail, body, attach=None, suffix=None):
-	dic = {
-			'name': name,
-			'mail': mail,
-			'body': body,
-			}
+	def htmlEscape(s):
+		return s.replace('&', '&amp;')\
+				.replace('<', '&lt;')\
+				.replace('>', '&gt;')
+
+	dic = {}
+	if name:
+		dic['name'] = htmlEscape(name.strip())
+	if mail:
+		dic['mail'] = htmlEscape(mail.strip())
+	if not body:
+		raise BadRecordException()
+	dic['body'] = htmlEscape(body.strip()).replace('\n', '<br>')
+
 	if attach:
 		dic['attach'] = b64encode(attach)
-		dic['suffix'] = suffix
+		dic['suffix'] = htmlEscape(suffix.strip())
 
 	arr = []
 	for key in dic.keys():
-		val = str(dic[key]).replace('<', '&lt;').replace('>', '&gt;')
+		val = str(dic[key])
+		if '\n' in key or '\n' in val or '<>' in key:
+			raise BadRecordException()
 		arr.append(str(key) +":"+ val)
 
 	record_body = '<>'.join(arr)

@@ -11,7 +11,13 @@ log = logging.getLogger(__name__)
 def _multiThreadWorker(worker, queue):
 	while not queue.empty():
 		args = queue.get()
-		worker(*args)
+		try:
+			worker(*args)
+		except Exception:
+			log.isEnabledFor(logging.ERROR) and log.error(
+					'_multiThreadWorker: worker died.\n' +
+					traceback.format_exc()
+					)
 
 def multiThread(worker, queue, maxWorkers=settings.MAX_THREADS, daemon=True, join=True):
 	threads = []
@@ -67,7 +73,7 @@ def notify():
 		s.settimeout(0)
 		try:
 			s.connect(settings.MESSAGE_QUEUE_SOCK_FILE)
-		except:
+		except ConnectionError:
 			pass
 
 def messageScheduler(msgtype, msg='', interval=0, wait=0):

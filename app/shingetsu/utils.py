@@ -1,4 +1,5 @@
 
+from app.shingetsu.error import BadFileNameException, BadRecordException, BadTimeRange
 from lib.models import Record
 from lib.utils import datetime2timestamp
 import time
@@ -14,7 +15,10 @@ import logging
 log = logging.getLogger(__name__)
 
 def splitFileName(fname):
-	return fname.split('_', 2)
+	result = fname.split('_', 2)
+	if len(result) != 2:
+		raise BadFileNameException()
+	return result
 
 def record2str(query, include_body=True):
 	if not include_body:
@@ -40,10 +44,10 @@ def getTimeRange(atime, starttime, endtime):
 			return (int(starttime), int(endtime))
 		now = time.mktime(datetime.now().timetuple())
 		return (int(starttime), now)
-	else:
-		if endtime:
-			return (0, int(endtime))
-		raise 'ERROR'
+	if endtime:
+		return (0, int(endtime))
+	# All variable is None.
+	raise BadTimeRange()
 
 def httpGet(http_addr):
 	log.isEnabledFor(logging.DEBUG) and log.debug('HTTP_GET '+http_addr)
@@ -69,11 +73,15 @@ def str2recordInfo(string):
 		yield record.split('<>', 2)
 
 def makeRecordStr(timestamp, name, mail, body, attach=None, suffix=None):
-	dic = {
-			'name': name,
-			'mail': mail,
-			'body': body,
-			}
+	dic = {}
+	if name:
+		dic['name'] = name
+	if mail:
+		dic['mail'] = mail
+	if not body:
+		raise BadRecordException()
+	dic['body'] = body
+
 	if attach:
 		dic['attach'] = b64encode(attach)
 		dic['suffix'] = suffix

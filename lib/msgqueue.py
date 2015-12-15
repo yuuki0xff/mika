@@ -73,7 +73,7 @@ def notify():
 		s.settimeout(0)
 		try:
 			s.connect(settings.MESSAGE_QUEUE_SOCK_FILE)
-		except ConnectionError:
+		except Exception:
 			pass
 
 def messageScheduler(msgtype, msg='', interval=0, wait=0):

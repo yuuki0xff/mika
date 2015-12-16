@@ -130,17 +130,22 @@ module Models.Filters{
 	 * IThreadListFilter
 	****************************************************************/
 	export interface IRecordListFilter{
-		limit:number;
-		id:string;
-		start_time:number;
-		end_time:number;
+		limit?:number;
+		id?:string;
+		start_time?:number;
+		end_time?:number;
 	}
 
 	export interface IThreadListFilter{
-		limit:number;
-		title:string;
-		start_time:number;
-		end_time:number;
+		limit?:number;
+		title?:string;
+		start_time?:number;
+		end_time?:number;
+	}
+
+	export interface IUnionFilter{
+		recordList?: IRecordListFilter;
+		threadList?: IThreadListFilter;
 	}
 }
 
@@ -245,7 +250,7 @@ module Models{
 		}
 	}
 
-	export class RecordList{
+	export class RecordList implements IRecordList{
 		thread_id:number;
 		private records:Array<IRecord>;
 
@@ -267,7 +272,6 @@ module Models{
 			return records;
 		}
 		reload(callback:API.IAjaxCallback){
-			var opt = {};
 			var preCallback:API.IAjaxCallback = {
 				"success": (data)=>{
 					this.records = this.converter(data);
@@ -275,14 +279,7 @@ module Models{
 				},
 				"error": callback.error,
 			};
-			if(this.filter){
-				for(var key in "limit id start_time end_time".split(" ")){
-					if(this.filter[key]){
-						opt[key] = this.filter[key];
-					}
-				}
-			}
-			API.Records.get(this, opt, preCallback);
+			API.Records.get(this, this.filter, preCallback);
 		}
 	}
 
@@ -320,9 +317,10 @@ module Models{
 	export class Thread extends ThreadInfo implements IThread{
 		recordList:IRecordList;
 
-		constructor(thread:IThreadInfo, private sanitizer){
+		constructor(thread:IThreadInfo, public filter:Models.Filters.IRecordListFilter, private sanitizer){
 			super(<IThreadInfo>thread);
-			this.recordList = new RecordList(this, null, sanitizer);
+			this.filter = this.filter || {};
+			this.recordList = new RecordList(this, this.filter, sanitizer);
 		}
 
 		post(rec:IRecord, callback:API.IAjaxCallback){
@@ -346,7 +344,9 @@ module Models{
 	export class ThreadList implements IThreadList{
 		private threads:Array<IThread> = [];
 
-		constructor(public filter:Models.Filters.IThreadListFilter, private sanitizer:Security.Sanitizer){}
+		constructor(public filter:Models.Filters.IUnionFilter, private sanitizer:Security.Sanitizer){
+			this.filter = this.filter || {};
+		}
 
 		getAll(): IThread[]{
 			return this.threads;
@@ -360,24 +360,16 @@ module Models{
 			if(json.threads){
 				for(var i in json.threads){
 					var th = json.threads[i];
-					threads.push(new Thread(th, this.sanitizer));
+					threads.push(new Thread(th, this.filter.recordList, this.sanitizer));
 				}
 			}else if(json.thread){
-					var th = json.thread;
-				threads.push(new Thread(th, this.sanitizer));
+				var th = json.thread;
+				threads.push(new Thread(th, this.filter.recordList, this.sanitizer));
 			}
 			return threads;
 		}
 		reload(callback:API.IAjaxCallback){
-			var opt = {};
-			if(this.filter){
-				for(var key in "limit title start_time end_time".split(" ")){
-					if(this.filter[key]){
-						opt[key] = this.filter[key];
-					}
-				}
-			}
-			API.Threads.get(opt, {
+			API.Threads.get(this.filter.threadList, {
 				success: (data)=>{
 					this.threads = this.converter(data);
 					callback.success(this);
@@ -445,8 +437,16 @@ module Controllers{
 			$scope.switchMainView = (viewType:MainViewType)=>{this.switchMainView(viewType);};
 
 			var recordSanitizer = new Security.RecordSanitizer($sce);
+			var filter = <Models.Filters.IUnionFilter>{
+				threadList: {
+					limit: 100,
+				},
+				recordList: {
+					limit: 1000,
+				},
+			};
 
-			var tl = new Models.ThreadList(null, recordSanitizer);
+			var tl = new Models.ThreadList(filter, recordSanitizer);
 			tl.reload({
 				"success": ()=>{
 					$scope.threads = tl;

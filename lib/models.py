@@ -63,13 +63,9 @@ class Thread(Base):
 		# 16進数表現のA-Fは大文字でなければならない
 		return 'thread_' + b2a_hex(title.encode('utf-8')).decode('utf-8').upper()
 	@classmethod
-	def gets(cls, session, **kwargs):
+	def gets(cls, session, limit=None, stime=None, etime=None, title=None):
 		query = session.query(cls)
-		if 'time' in kwargs:
-			atime = kwargs['time']
-			query = query.filter(cls.timestamp == timestamp2str(atime))
-		if 'stime' in kwargs:
-			stime = kwargs['stime']
+		if stime is not None:
 			if stime == 0:
 				exp = sql_func.or_(
 						cls.timestamp >= timestamp2str(1),
@@ -78,15 +74,16 @@ class Thread(Base):
 			else:
 				exp = cls.timestamp >= timestamp2str(stime)
 			query = query.filter(exp)
-		if 'etime' in kwargs:
-			etime = kwargs['etime']
+		if etime is not None:
 			if etime == 0:
 				exp = cls.timestamp == timestamp2str(etime)
 			else:
 				exp = cls.timestamp <= timestamp2str(etime)
 			query = query.filter(exp)
-		if 'title' in kwargs:
-			query = query.filter(Thread.title == kwargs['title'])
+		if title is not None:
+			query = query.filter(Thread.title == title)
+		if limit is not None:
+			query = query.limit(int(limit))
 		return query
 
 class Record(Base):
@@ -94,7 +91,7 @@ class Record(Base):
 	__table_args__ = {'autoload': True}
 
 	@classmethod
-	def gets(cls, session, thread_id, stime=None, etime=None, bin_id=None, sort=True):
+	def gets(cls, session, thread_id, stime=None, etime=None, bin_id=None, limit=None, sort=True):
 		allRecords = session.query(Record).filter(Record.thread_id == thread_id)
 		if stime is not None:
 			Record.timestamp >= timestamp2datetime(stime)
@@ -107,9 +104,10 @@ class Record(Base):
 			allRecords = allRecords.filter(Record.timestamp <= timestamp2datetime(etime))
 		if bin_id is not None:
 			allRecords = allRecords.filter(Record.bin_id == bin_id)
-
 		if sort:
 			allRecords = allRecords.order_by(cls.timestamp)
+		if limit is not None:
+			allRecords = allRecords.limit(int(limit))
 		return allRecords
 	@classmethod
 	def get(cls, session, thread_id, bin_id, timestamp):

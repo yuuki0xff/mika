@@ -11,21 +11,22 @@ from app.shingetsu.utils import makeRecordStr, str2recordInfo
 from app.shingetsu import msgqueue
 import time
 
+def intOrNone(string):
+	if not string:
+		return None
+	return int(string)
+
 class threads(View):
 	def get(self, request, *args, **kwargs):
 		threads = []
-		gets_kwargs = {}
-		if 'limit' in request.GET:
-			gets_kwargs['limit'] = int(request.GET.get('limit', -1))
-		if 'start_time' in request.GET:
-			gets_kwargs['stime'] = int(request.GET.get('start_time'))
-		if 'end_time' in request.GET:
-			gets_kwargs['etime'] = int(request.GET.get('end_time'))
-		if 'title' in request.GET:
-			gets_kwargs['title'] = request.GET.get('title')
-
 		with Session() as s:
-			for t in Thread.gets(s, **gets_kwargs):
+			result = Thread.gets(s,
+					limit=intOrNone(request.GET.get('limit')),
+					stime=intOrNone(request.GET.get('start_time')),
+					etime=intOrNone(request.GET.get('end_time')),
+					title=request.GET.get('title'),
+					)
+			for t in result:
 				threads.append({
 					'id': int(t.id),
 					'title': t.title,
@@ -37,12 +38,8 @@ class threads(View):
 				}
 		return JsonResponse(obj)
 	def head(self, request, *args, **kwargs):
-		gets_kwargs = {}
-		if 'title' in request.GET:
-			gets_kwargs['title'] = request.GET.get('title')
-
 		with Session() as s:
-			for t in Thread.gets(s, **gets_kwargs):
+			for t in Thread.gets(s, title=request.GET.get('title')):
 				if t.records >=1:
 					return HttpResponse()
 				break
@@ -96,18 +93,23 @@ class records(View):
 						})
 			else:
 				""" 複数のレコードを返す方のAPI """
-				stime = etime = bin_id = None
-				if 'start_time' in request.GET:  stime = int(request.GET.get('start_time'))
-				if 'end_time' in request.GET:  etime = int(request.GET.get('end_time'))
-				if 'id' in request.GET:  bin_id = a2b_hex(kwargs['record_id'])
+				bin_id = request.GET.get('record_id')
+				if bin_id:
+					bin_id = a2b_hex(bin_id)
 
-				matchRecords = Record.gets(s, thread_id, stime, etime, bin_id).with_entities(
-						Record.bin_id,
-						Record.timestamp,
-						Record.name,
-						Record.mail,
-						Record.body,
-						sql_func.length(Record.attach).label('attach_len'))
+				matchRecords = Record.gets(s,
+						thread_id=thread_id,
+						stime=intOrNone(request.GET.get('start_time')),
+						etime=intOrNone(request.GET.get('end_time')),
+						bin_id=bin_id,
+						limit=intOrNone(request.GET.get('limit')),
+					).with_entities(
+							Record.bin_id,
+							Record.timestamp,
+							Record.name,
+							Record.mail,
+							Record.body,
+							sql_func.length(Record.attach).label('attach_len'))
 				for r in matchRecords:
 					records.append({
 						'id': b2a_hex(r.bin_id).decode('ascii'),

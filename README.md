@@ -11,3 +11,7 @@ shinGETsuの実装の一つ
  * SQLAlchemy 1.0.9
  * uWSGI 2.0.11.2
 
+Contributers
+------------
+[*./static/lib/sanitize.js*] Gabriel Birke ( https://github.com/gbirke/Sanitize.js )
+

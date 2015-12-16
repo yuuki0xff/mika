@@ -1,5 +1,6 @@
 /// <reference path="./typings/jquery/jquery.d.ts" />
 /// <reference path="./typings/angularjs/angular.d.ts" />
+/// <reference path="./lib/sanitize.d.ts" />
 
 module Security{
 	export interface Sanitizer{
@@ -227,6 +228,8 @@ module Models{
 		mail:string;
 		body:string;
 		attach:boolean;
+		htmlName:string;
+		htmlMail:string;
 		htmlBody:string;
 
 		constructor(thread_id:number, record:any, sanitizer){
@@ -246,7 +249,7 @@ module Models{
 		thread_id:number;
 		private records:Array<IRecord>;
 
-		constructor(thread:IThreadInfo, public filter:Models.Filters.IRecordListFilter=undefined, private sanitizer){
+		constructor(thread:IThreadInfo, public filter:Models.Filters.IRecordListFilter, private sanitizer:Security.Sanitizer){
 			this.thread_id = thread.id;
 		}
 
@@ -343,7 +346,7 @@ module Models{
 	export class ThreadList implements IThreadList{
 		private threads:Array<IThread> = [];
 
-		constructor(public filter:Models.Filters.IThreadListFilter=undefined, private sanitizer){}
+		constructor(public filter:Models.Filters.IThreadListFilter, private sanitizer:Security.Sanitizer){}
 
 		getAll(): IThread[]{
 			return this.threads;

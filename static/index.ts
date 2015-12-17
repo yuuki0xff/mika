@@ -212,7 +212,7 @@ module Models{
 		id:number;
 		title:string;
 		timestamp:number; // 最終書き込み日時
-		recordCount:number;
+		records:number;
 		reload(callback:API.IAjaxCallback);
 	}
 
@@ -395,13 +395,13 @@ module Models{
 		id:number;
 		title:string;
 		timestamp:number;
-		recordCount:number;
+		records:number;
 
 		constructor(threadInfo:IThreadInfo){
 			this.id = threadInfo.id;
 			this.title = threadInfo.title;
 			this.timestamp = threadInfo.timestamp;
-			this.recordCount = threadInfo.recordCount;
+			this.records = threadInfo.records;
 		}
 
 		reload(callback:API.IAjaxCallback){
@@ -413,7 +413,7 @@ module Models{
 					this.id = data.threads[0].id;
 					this.title = data.threads[0].title;
 					this.timestamp = data.threads[0].timestamp;
-					this.recordCount = data.threads[0].recordCount;
+					this.records = data.threads[0].records;
 					callback.success(this);
 				},
 				error: callback.error,
@@ -468,7 +468,7 @@ module Models{
 				var funcList = {
 					title: (a: IThread, b: IThread)=>{ return a.title.localeCompare(b.title); },
 					timestamp: (a: IThread, b: IThread)=>{ return b.timestamp - a.timestamp; },
-					recordCount: (a: IThread, b: IThread)=>{ return b.recordCount - a.recordCount; },
+					records: (a: IThread, b: IThread)=>{ return b.records - a.records; },
 				};
 				func = funcList[this.option.sorter.key];
 			}else{

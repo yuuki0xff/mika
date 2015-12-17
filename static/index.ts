@@ -149,6 +149,24 @@ module Models.Filters{
 	}
 }
 
+module Models.Sorters{
+	export interface IRecordCompareFunc{
+		(a: Models.IRecord, b: Models.IRecord):number;
+	}
+	export interface IThreadCompareFunc{
+		(a: Models.IThread, b: Models.IThread):number;
+	}
+
+	export interface IRecordListSorter{
+		key?:string;
+		compare?:IRecordCompareFunc;
+	}
+	export interface IThreadListSorter{
+		key?:string;
+		compare?:IThreadCompareFunc;
+	}
+}
+
 module Models{
 	/****************************************************************
  	 * インタフェース
@@ -180,10 +198,12 @@ module Models{
 
 	export interface IRecordListOption{
 		filter: Models.Filters.IRecordListFilter;
+		sorter: Models.Sorters.IRecordListSorter;
 		sanitizer: Security.Sanitizer;
 	}
 	export interface IRecordList extends IList<IRecord>{
 		thread_id:number;
+		sort();
 		reload(callback:API.IAjaxCallback);
 		update(callback:API.IAjaxCallback); // 最近の投稿のみ再取得
 	}
@@ -206,10 +226,12 @@ module Models{
 
 	export interface IThreadListOption{
 		filter: Models.Filters.IThreadListFilter;
+		sorter: Models.Sorters.IThreadListSorter;
 		recordListOption: IRecordListOption;
 	}
 
 	export interface IThreadList extends IList<IThread>{
+		sort();
 		reload(callback:API.IAjaxCallback);
 		add(title:string, callback:API.IAjaxCallback);
 	}
@@ -280,10 +302,29 @@ module Models{
 			}
 			return records;
 		}
+		sort(){
+			var func: Models.Sorters.IRecordCompareFunc;
+			if(! this.option.sorter){
+				return;
+			}
+			if(this.option.sorter.key){
+				var funcList = {
+					timestamp: (a: IRecord, b: IRecord)=>{ return a.timestamp - b.timestamp; },
+				};
+				func = funcList[this.option.sorter.key];
+			}else{
+				func = this.option.sorter.compare;
+			}
+
+			if(func){
+				this.records.sort(func);
+			}
+		}
 		reload(callback:API.IAjaxCallback){
 			var preCallback:API.IAjaxCallback = {
 				"success": (data)=>{
 					this.records = this.converter(data);
+					this.sort();
 					callback.success(this);
 				},
 				"error": callback.error,
@@ -306,6 +347,7 @@ module Models{
 				// 十分な数のレコードを取得できなかった
 				if(filter.end_time < filter.start_time){
 					this.records = records;
+					this.sort();
 					callback.success(this);
 					return;
 				}
@@ -315,6 +357,7 @@ module Models{
 						var rec = this.converter(data);
 						if(! filter.limit){
 							this.records = rec;
+							this.sort();
 							callback.success(this);
 							 // ループ終了
 						}else if(rec.length >= filter.limit){
@@ -326,6 +369,7 @@ module Models{
 						}else if(records.length + rec.length >= filter.limit){
 							// 十分な数のレコードを取得できた
 							this.records = records.concat(rec).slice(0, filter.limit);
+							this.sort();
 							callback.success(this);
 							 // ループ終了
 						}else{
@@ -415,6 +459,26 @@ module Models{
 			return this.threads[i];
 		}
 
+		sort(){
+			var func: Models.Sorters.IThreadCompareFunc;
+			if(! this.option.sorter){
+				return;
+			}
+			if(this.option.sorter.key){
+				var funcList = {
+					title: (a: IThread, b: IThread)=>{ return a.title.localeCompare(b.title); },
+					timestamp: (a: IThread, b: IThread)=>{ return b.timestamp - a.timestamp; },
+					recordCount: (a: IThread, b: IThread)=>{ return b.recordCount - a.recordCount; },
+				};
+				func = funcList[this.option.sorter.key];
+			}else{
+				func = this.option.sorter.compare;
+			}
+
+			if(func){
+				this.threads.sort(func);
+			}
+		}
 		private converter(json):Array<IThread>{
 			var threads = [];
 			if(json.threads){
@@ -432,6 +496,7 @@ module Models{
 			API.Threads.get(this.filter.threadList, {
 				success: (data)=>{
 					this.threads = this.converter(data);
+					this.sort();
 					callback.success(this);
 				},
 				error: callback.error,
@@ -442,6 +507,7 @@ module Models{
 				"success": (json)=>{
 					var th = this.converter(json)[0];
 					this.threads.push(th);
+					this.sort();
 					return callback.success(th);
 				},
 				"error": callback.error,
@@ -500,9 +566,15 @@ module Controllers{
 				filter: {
 					limit: 100,
 				},
+				sorter: {
+					key: "timestamp",
+				},
 				recordListOption: {
 					filter: {
 						limit: 100,
+					},
+					sorter: {
+						key: "timestamp",
 					},
 					sanitizer: new Security.RecordSanitizer($sce),
 				},

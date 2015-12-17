@@ -53,18 +53,16 @@ JOIN_INTERVAL=30*60
 SECRET_KEY = '$#7@64zk2+aqqmg3fsd3$9ucs4&!2#t-pvlwp4$j270h_x&x+*'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-TEMPLATE_DEBUG = True
+TEMPLATE_DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
 
 INSTALLED_APPS = (
-#     'django.contrib.admin',
-#     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
@@ -77,9 +75,6 @@ INSTALLED_APPS = (
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-#     'django.middleware.csrf.CsrfViewMiddleware',
-#     'django.contrib.auth.middleware.AuthenticationMiddleware',
-#     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
@@ -130,37 +125,34 @@ LOGGING = {
     'handlers': {
         'null': {
             'level':'DEBUG',
-            'class':'django.utils.log.NullHandler',
+            'class':'logging.NullHandler',
         },
-        'console':{
+        'console': {
             'level':'DEBUG',
             'class':'logging.StreamHandler',
             'formatter': 'standard',
         },
+		'logfile':{
+			'level': 'DEBUG',
+			'class': 'logging.handlers.TimedRotatingFileHandler',
+			'formatter': 'standard',
+			'when': 'D',
+			'filename': '/srv/log/mika.log'
+		},
     },
     'loggers': {
         'django': {
-            'handlers':['console'],
-            'propagate': False,
-            'level':'INFO',
-        },
-        'django.request': {
-            'handlers': ['console'],
+            'handlers': ['logfile'],
             'level': 'WARNING',
-            'propagate': False,
-        },
-        'django.db.backends': {
-            'handlers': ['console'],
-            'level': 'WARNING',
-            'propagate': False,
+            'propagate': True,
         },
         'app': {
-            'handlers': ['console'],
+            'handlers': ['logfile'],
             'level': 'DEBUG',
             'propagate': False,
         },
         'lib': {
-            'handlers': ['console'],
+            'handlers': ['logfile'],
             'level': 'DEBUG',
             'propagate': False,
         },

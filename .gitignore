@@ -4,6 +4,9 @@ static/*.js
 static/*.map
 static/typings/
 
+# application log files
+log/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

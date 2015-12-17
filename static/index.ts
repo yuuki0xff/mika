@@ -603,7 +603,7 @@ module Controllers{
 			this.$scope.currentThread = thread;
 			this.switchMainView(MainViewType.thread);
 			if(this.$scope.currentThread){
-				this.$scope.currentThread.reload({
+				this.$scope.currentThread.update({
 					"success": ()=>{
 						this.$scope.$apply();
 					},
@@ -662,7 +662,7 @@ module Controllers{
 		postResponse(){
 			var callback = <API.IAjaxCallback>{
 				"success": ()=>{
-					this.$scope.currentThread.reload({
+					this.$scope.currentThread.update({
 						"success": ()=>{
 							this.$scope.$apply();
 						},

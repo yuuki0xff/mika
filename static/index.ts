@@ -185,6 +185,7 @@ module Models{
 	export interface IRecordList extends IList<IRecord>{
 		thread_id:number;
 		reload(callback:API.IAjaxCallback);
+		update(callback:API.IAjaxCallback); // 最近の投稿のみ再取得
 	}
 
 	export interface IThreadInfo{
@@ -289,6 +290,61 @@ module Models{
 			};
 			API.Records.get(this, this.option.filter, preCallback);
 		}
+		// 最近の投稿を取得
+		update(callback:API.IAjaxCallback){
+			var endTime = this.option.filter.end_time || Math.floor((new Date()).getTime()/1000);
+			var timeRange = 24 * 60*60;
+			var extendRange = true;
+			var records = [];
+
+			var loop = ()=>{
+				var filter = jQuery.extend({}, this.option.filter);
+				filter.start_time = Math.max(endTime - timeRange, this.option.filter.start_time || 0);
+				filter.end_time = endTime;
+
+				// ループ終了
+				// 十分な数のレコードを取得できなかった
+				if(filter.end_time < filter.start_time){
+					this.records = records;
+					callback.success(this);
+					return;
+				}
+
+				API.Records.get(this, filter, {
+					"success": (data)=>{
+						var rec = this.converter(data);
+						if(! filter.limit){
+							this.records = rec;
+							callback.success(this);
+							 // ループ終了
+						}else if(rec.length >= filter.limit){
+							// 新しいレコードが取得できていない
+							// 範囲を制限して再取得
+							timeRange = Math.floor(timeRange / 4);
+							extendRange = false;
+							loop();
+						}else if(records.length + rec.length >= filter.limit){
+							// 十分な数のレコードを取得できた
+							this.records = records.concat(rec).slice(0, filter.limit);
+							callback.success(this);
+							 // ループ終了
+						}else{
+							this.records = records = records.concat(rec);
+
+							// 取得範囲を過去の方向へ移動させてから再取得
+							// 高々4回で取得できるはず
+							endTime -= timeRange;
+							if(extendRange){
+								timeRange *= 10;
+							}
+							loop();
+						}
+					},
+					"error": callback.error,
+				});
+			};
+			loop();
+		}
 	}
 
 	export class ThreadInfo implements IThreadInfo{
@@ -337,11 +393,7 @@ module Models{
 			this.recordList.reload(callback);
 		}
 		update(callback:API.IAjaxCallback){
-			var opt = {
-				"limit": 1000,
-			};
-			// TODO:
-//             API.Records.get(<IThreadInfo>this, opt, callback);
+			this.recordList.update(callback);
 		}
 		get(filter:Models.Filters.IRecordListFilter):IRecordList{
 			return this.recordList;
@@ -460,7 +512,7 @@ module Controllers{
 					$scope.threads = tl;
 					$scope.currentThread = tl.get(0);
 					if($scope.currentThread){
-						$scope.currentThread.reload({
+						$scope.currentThread.update({
 							"success": ()=>{
 								$scope.$apply();
 							},

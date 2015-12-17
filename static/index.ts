@@ -502,7 +502,7 @@ module Controllers{
 				},
 				recordListOption: {
 					filter: {
-						limit: 1000,
+						limit: 100,
 					},
 					sanitizer: new Security.RecordSanitizer($sce),
 				},

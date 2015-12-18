@@ -6,6 +6,7 @@ from lib.utils import datetime2timestamp
 from lib.msgqueue import notify
 from app.shingetsu.error import BadRecordException
 from sqlalchemy.sql import func as sql_func
+from sqlalchemy.exc import IntegrityError
 from binascii import a2b_hex, b2a_hex
 from app.shingetsu.utils import makeRecordStr, str2recordInfo
 from app.shingetsu import msgqueue
@@ -157,12 +158,15 @@ class records(View):
 		_, bin_id_hex, body = tuple(str2recordInfo(recStr))[0]
 		bin_id = a2b_hex(bin_id_hex)
 		with Session() as s:
-			Record.add(s, thread_id, timestamp, bin_id, body)
-			threadTitle = Thread.get(s, id=thread_id).value(Thread.title)
-			Recent.add(s, timestamp, bin_id, Thread.getFileName(threadTitle))
-			s.commit()
-
-		msgqueue.updateRecord(thread_id, bin_id_hex, timestamp)
+			try:
+				Record.add(s, thread_id, timestamp, bin_id, body)
+				s.commit()
+				threadTitle = Thread.get(s, id=thread_id).value(Thread.title)
+				Recent.add(s, timestamp, bin_id, Thread.getFileName(threadTitle))
+				s.commit()
+				msgqueue.updateRecord(thread_id, bin_id_hex, timestamp)
+			except IntegrityError:
+				s.rollback()
 		return HttpResponse()
 
 class attach(View):

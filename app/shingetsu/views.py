@@ -5,6 +5,7 @@ from lib.models import Session, Node, Thread, Record, Recent
 from app.shingetsu.utils import splitFileName, record2str, getTimeRange
 from app.shingetsu.error import BadFileNameException, BadTimeRange
 from app.shingetsu import msgqueue
+from sqlalchemy.exc import IntegrityError
 from binascii import a2b_hex, b2a_hex
 import binascii
 from lib.utils import datetime2timestamp
@@ -165,8 +166,11 @@ class update(View):
 				thread_id = Thread.get(s, title=title).value(Thread.id)
 				if thread_id:
 					msgqueue.getAndUpdateRecord(addr, thread_id, id_hex, atime)
-				Recent.add(s, timestamp=atime, binId=id_bin, fileName=fileName)
-				s.commit()
+				try:
+					Recent.add(s, timestamp=atime, binId=id_bin, fileName=fileName)
+					s.commit()
+				except IntegrityError:
+					s.rollback()
 			return response
 
 class recent(View):

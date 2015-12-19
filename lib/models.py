@@ -5,7 +5,8 @@ from sqlalchemy.orm.scoping import scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 from contextlib import contextmanager
 from datetime import datetime
-from binascii import a2b_hex, b2a_hex
+from binascii import b2a_hex
+from base64 import b64decode
 from lib.utils import timestamp2str, timestamp2datetime, datetime2timestamp
 import time
 from core import settings
@@ -154,7 +155,7 @@ class Record(Base):
 			rec.remove_id = fields.get('remove_id')
 			rec.remove_stamp = fields.get('remove_stamp')
 		if 'attach' in fields:
-			rec.attach = a2b_hex(fields['attach'])
+			rec.attach = b64decode(fields['attach'])
 			rec.suffix = fields['suffix']
 		if 'pubkey' in fields:
 			rec.pubkey = fields.get('pubkey')

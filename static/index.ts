@@ -681,6 +681,7 @@ module Controllers{
 				"success": ()=>{
 					this.$scope.currentThread.update({
 						"success": ()=>{
+							this.$scope.newResponse.body = "";
 							this.$scope.$apply();
 						},
 						"error": ()=>{return;},

@@ -193,7 +193,8 @@ module Models{
 		name:string;
 		mail:string;
 		body:string;
-//         attach_sfx:boolean;
+		attach:boolean;
+		suffix:string;
 	}
 
 	export interface IRecordListOption{
@@ -264,9 +265,12 @@ module Models{
 		mail:string;
 		body:string;
 		attach:boolean;
+		suffix:string;
 		htmlName:string;
 		htmlMail:string;
 		htmlBody:string;
+		fileUrl:string;
+		fileType:string;
 
 		constructor(thread_id:number, record:any, sanitizer){
 			super(thread_id, record);
@@ -274,10 +278,22 @@ module Models{
 			this.mail = record.mail;
 			this.body = record.body;
 			this.attach = record.attach;
+			this.suffix = record.suffix;
 
 			this.htmlName = sanitizer.clean_string(this.name);
 			this.htmlMail = sanitizer.clean_string(this.mail);
 			this.htmlBody = sanitizer.clean_string(this.body);
+			if(this.attach){
+				this.fileUrl = API.Attach.getURL(this);
+				this.fileType = {
+					jpeg: "img",
+					jpg: "img",
+					png: "img",
+					gif: "img",
+				}[this.suffix] || "unknow";
+			}else{
+				this.fileUrl = this.fileType = null;
+			}
 		}
 	}
 
@@ -643,7 +659,8 @@ module Controllers{
 				"name": null,
 				"mail": null,
 				"body": null,
-//                 "attach_sfx": null,
+				"attach": null,
+				"suffix": null,
 			};
 			$scope.postResponse = ()=>{return this.postResponse();};
 		}

@@ -49,8 +49,10 @@
 						<span ng-bind-html='record.htmlName' class='name'></span>
 						[<span ng-bind-html='record.htmlMail' class='mail'></span>]
 						<span class='datetime'>{{record.timestamp * 1000 | date:'yyyy-MM-dd HH:mm:ss'}}</span>
+						<span ng-if='record.fileType == "unknow"'><a ng-href='{{record.fileUrl}}' />添付ファイル.{{record.suffix}}</a></span>
 					</div>
 					<p ng-bind-html='record.htmlBody' class='body'></p>
+					<img ng-if='record.fileType == "img"' ng-src='{{record.fileUrl}}' />
 				</div>
 			</div>
 			<div class='post'>

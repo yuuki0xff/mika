@@ -2,6 +2,8 @@
 set -eu
 SELF=$(readlink -f $0)
 ROOT_DIR=${SELF%/*/*}
+LOG_DIR=${ROOT_DIR}/log
+mkdir -pm 700 $LOG_DIR
 
 DOCKER_MYSQL=mika/mysql:latest
 DOCKER_NGINX=mika/nginx:latest
@@ -47,9 +49,11 @@ startContainer(){
 			echo MIKA_DB_AUTH=root:${MYSQL_ROOT_PASSWORD} |
 				docker run -d \
 					-v $ROOT_DIR:/srv:ro \
+					-v $LOG_DIR:/srv/log \
 					--link $(getCID mysql):mysql \
 					-e MIKA_DB_TYPE='mysql+mysqlconnector' \
 					-e MIKA_DB_NAME=mika \
+					-e MIKA_UID=$UID \
 					--env-file /dev/stdin \
 					$DOCKER_MIKA | cut -c1-12 >$INFO_DIR/$containerName
 			;;
@@ -88,13 +92,10 @@ doAuto(){
 	if ! checkContainerStatus mysql; then
 		startContainer mysql
 		startContainer mika
-		attachContainer mika &
 		startContainer nginx
 	else
 		startContainer mika
-		attachContainer mika &
 	fi
-	wait
 }
 
 doAttach(){

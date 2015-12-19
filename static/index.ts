@@ -1,5 +1,6 @@
 /// <reference path="./typings/jquery/jquery.d.ts" />
 /// <reference path="./typings/angularjs/angular.d.ts" />
+/// <reference path="./lib/sanitize.d.ts" />
 
 module Security{
 	export interface Sanitizer{
@@ -129,17 +130,40 @@ module Models.Filters{
 	 * IThreadListFilter
 	****************************************************************/
 	export interface IRecordListFilter{
-		limit:number;
-		id:string;
-		start_time:number;
-		end_time:number;
+		limit?:number;
+		id?:string;
+		start_time?:number;
+		end_time?:number;
 	}
 
 	export interface IThreadListFilter{
-		limit:number;
-		title:string;
-		start_time:number;
-		end_time:number;
+		limit?:number;
+		title?:string;
+		start_time?:number;
+		end_time?:number;
+	}
+
+	export interface IUnionFilter{
+		recordList?: IRecordListFilter;
+		threadList?: IThreadListFilter;
+	}
+}
+
+module Models.Sorters{
+	export interface IRecordCompareFunc{
+		(a: Models.IRecord, b: Models.IRecord):number;
+	}
+	export interface IThreadCompareFunc{
+		(a: Models.IThread, b: Models.IThread):number;
+	}
+
+	export interface IRecordListSorter{
+		key?:string;
+		compare?:IRecordCompareFunc;
+	}
+	export interface IThreadListSorter{
+		key?:string;
+		compare?:IThreadCompareFunc;
 	}
 }
 
@@ -172,17 +196,23 @@ module Models{
 //         attach_sfx:boolean;
 	}
 
+	export interface IRecordListOption{
+		filter: Models.Filters.IRecordListFilter;
+		sorter: Models.Sorters.IRecordListSorter;
+		sanitizer: Security.Sanitizer;
+	}
 	export interface IRecordList extends IList<IRecord>{
 		thread_id:number;
-		filter:Models.Filters.IRecordListFilter;
+		sort();
 		reload(callback:API.IAjaxCallback);
+		update(callback:API.IAjaxCallback); // 最近の投稿のみ再取得
 	}
 
 	export interface IThreadInfo{
 		id:number;
 		title:string;
 		timestamp:number; // 最終書き込み日時
-		recordCount:number;
+		records:number;
 		reload(callback:API.IAjaxCallback);
 	}
 
@@ -194,7 +224,14 @@ module Models{
 		get(filter:Models.Filters.IRecordListFilter):IRecordList;
 	}
 
+	export interface IThreadListOption{
+		filter: Models.Filters.IThreadListFilter;
+		sorter: Models.Sorters.IThreadListSorter;
+		recordListOption: IRecordListOption;
+	}
+
 	export interface IThreadList extends IList<IThread>{
+		sort();
 		reload(callback:API.IAjaxCallback);
 		add(title:string, callback:API.IAjaxCallback);
 	}
@@ -227,6 +264,8 @@ module Models{
 		mail:string;
 		body:string;
 		attach:boolean;
+		htmlName:string;
+		htmlMail:string;
 		htmlBody:string;
 
 		constructor(thread_id:number, record:any, sanitizer){
@@ -242,11 +281,11 @@ module Models{
 		}
 	}
 
-	export class RecordList{
+	export class RecordList implements IRecordList{
 		thread_id:number;
 		private records:Array<IRecord>;
 
-		constructor(thread:IThreadInfo, public filter:Models.Filters.IRecordListFilter=undefined, private sanitizer){
+		constructor(thread:IThreadInfo, private option:IRecordListOption){
 			this.thread_id = thread.id;
 		}
 
@@ -259,27 +298,96 @@ module Models{
 		private converter(json):Array<Record>{
 			var records = [];
 			for(var i in json.records){
-				records.push(new Record(this.thread_id, json.records[i], this.sanitizer));
+				records.push(new Record(this.thread_id, json.records[i], this.option.sanitizer));
 			}
 			return records;
 		}
+		sort(){
+			var func: Models.Sorters.IRecordCompareFunc;
+			if(! this.option.sorter){
+				return;
+			}
+			if(this.option.sorter.key){
+				var funcList = {
+					timestamp: (a: IRecord, b: IRecord)=>{ return a.timestamp - b.timestamp; },
+				};
+				func = funcList[this.option.sorter.key];
+			}else{
+				func = this.option.sorter.compare;
+			}
+
+			if(func){
+				this.records.sort(func);
+			}
+		}
 		reload(callback:API.IAjaxCallback){
-			var opt = {};
 			var preCallback:API.IAjaxCallback = {
 				"success": (data)=>{
 					this.records = this.converter(data);
+					this.sort();
 					callback.success(this);
 				},
 				"error": callback.error,
 			};
-			if(this.filter){
-				for(var key in "limit id start_time end_time".split(" ")){
-					if(this.filter[key]){
-						opt[key] = this.filter[key];
-					}
+			API.Records.get(this, this.option.filter, preCallback);
+		}
+		// 最近の投稿を取得
+		update(callback:API.IAjaxCallback){
+			var endTime = this.option.filter.end_time || Math.floor((new Date()).getTime()/1000);
+			var timeRange = 24 * 60*60;
+			var extendRange = true;
+			var records = [];
+
+			var loop = ()=>{
+				var filter = jQuery.extend({}, this.option.filter);
+				filter.start_time = Math.max(endTime - timeRange, this.option.filter.start_time || 0);
+				filter.end_time = endTime;
+
+				// ループ終了
+				// 十分な数のレコードを取得できなかった
+				if(filter.end_time < filter.start_time){
+					this.records = records;
+					this.sort();
+					callback.success(this);
+					return;
 				}
-			}
-			API.Records.get(this, opt, preCallback);
+
+				API.Records.get(this, filter, {
+					"success": (data)=>{
+						var rec = this.converter(data);
+						if(! filter.limit){
+							this.records = rec;
+							this.sort();
+							callback.success(this);
+							 // ループ終了
+						}else if(rec.length >= filter.limit){
+							// 新しいレコードが取得できていない
+							// 範囲を制限して再取得
+							timeRange = Math.floor(timeRange / 4);
+							extendRange = false;
+							loop();
+						}else if(records.length + rec.length >= filter.limit){
+							// 十分な数のレコードを取得できた
+							this.records = records.concat(rec).slice(0, filter.limit);
+							this.sort();
+							callback.success(this);
+							 // ループ終了
+						}else{
+							this.records = records = records.concat(rec);
+
+							// 取得範囲を過去の方向へ移動させてから再取得
+							// 高々4回で取得できるはず
+							endTime -= timeRange;
+							if(extendRange){
+								timeRange *= 10;
+							}
+							loop();
+						}
+					},
+					"error": callback.error,
+				});
+			};
+			loop();
 		}
 	}
 
@@ -287,13 +395,13 @@ module Models{
 		id:number;
 		title:string;
 		timestamp:number;
-		recordCount:number;
+		records:number;
 
 		constructor(threadInfo:IThreadInfo){
 			this.id = threadInfo.id;
 			this.title = threadInfo.title;
 			this.timestamp = threadInfo.timestamp;
-			this.recordCount = threadInfo.recordCount;
+			this.records = threadInfo.records;
 		}
 
 		reload(callback:API.IAjaxCallback){
@@ -305,7 +413,7 @@ module Models{
 					this.id = data.threads[0].id;
 					this.title = data.threads[0].title;
 					this.timestamp = data.threads[0].timestamp;
-					this.recordCount = data.threads[0].recordCount;
+					this.records = data.threads[0].records;
 					callback.success(this);
 				},
 				error: callback.error,
@@ -317,9 +425,9 @@ module Models{
 	export class Thread extends ThreadInfo implements IThread{
 		recordList:IRecordList;
 
-		constructor(thread:IThreadInfo, private sanitizer){
+		constructor(thread:IThreadInfo, private option:IRecordListOption){
 			super(<IThreadInfo>thread);
-			this.recordList = new RecordList(this, null, sanitizer);
+			this.recordList = new RecordList(this, option);
 		}
 
 		post(rec:IRecord, callback:API.IAjaxCallback){
@@ -329,11 +437,7 @@ module Models{
 			this.recordList.reload(callback);
 		}
 		update(callback:API.IAjaxCallback){
-			var opt = {
-				"limit": 1000,
-			};
-			// TODO:
-//             API.Records.get(<IThreadInfo>this, opt, callback);
+			this.recordList.update(callback);
 		}
 		get(filter:Models.Filters.IRecordListFilter):IRecordList{
 			return this.recordList;
@@ -342,8 +446,11 @@ module Models{
 
 	export class ThreadList implements IThreadList{
 		private threads:Array<IThread> = [];
+		public filter:Models.Filters.IUnionFilter;;
 
-		constructor(public filter:Models.Filters.IThreadListFilter=undefined, private sanitizer){}
+		constructor(private option: IThreadListOption){
+			this.filter = option.filter || {};
+		}
 
 		getAll(): IThread[]{
 			return this.threads;
@@ -352,31 +459,44 @@ module Models{
 			return this.threads[i];
 		}
 
+		sort(){
+			var func: Models.Sorters.IThreadCompareFunc;
+			if(! this.option.sorter){
+				return;
+			}
+			if(this.option.sorter.key){
+				var funcList = {
+					title: (a: IThread, b: IThread)=>{ return a.title.localeCompare(b.title); },
+					timestamp: (a: IThread, b: IThread)=>{ return b.timestamp - a.timestamp; },
+					records: (a: IThread, b: IThread)=>{ return b.records - a.records; },
+				};
+				func = funcList[this.option.sorter.key];
+			}else{
+				func = this.option.sorter.compare;
+			}
+
+			if(func){
+				this.threads.sort(func);
+			}
+		}
 		private converter(json):Array<IThread>{
 			var threads = [];
 			if(json.threads){
 				for(var i in json.threads){
 					var th = json.threads[i];
-					threads.push(new Thread(th, this.sanitizer));
+					threads.push(new Thread(th, this.option.recordListOption));
 				}
 			}else if(json.thread){
-					var th = json.thread;
-				threads.push(new Thread(th, this.sanitizer));
+				var th = json.thread;
+				threads.push(new Thread(th, this.option.recordListOption));
 			}
 			return threads;
 		}
 		reload(callback:API.IAjaxCallback){
-			var opt = {};
-			if(this.filter){
-				for(var key in "limit title start_time end_time".split(" ")){
-					if(this.filter[key]){
-						opt[key] = this.filter[key];
-					}
-				}
-			}
-			API.Threads.get(opt, {
+			API.Threads.get(this.filter.threadList, {
 				success: (data)=>{
 					this.threads = this.converter(data);
+					this.sort();
 					callback.success(this);
 				},
 				error: callback.error,
@@ -387,6 +507,7 @@ module Models{
 				"success": (json)=>{
 					var th = this.converter(json)[0];
 					this.threads.push(th);
+					this.sort();
 					return callback.success(th);
 				},
 				"error": callback.error,
@@ -441,15 +562,29 @@ module Controllers{
 			$scope.setCurrentThread = (thread:Models.Thread)=>{this.setCurrentThread(thread);};
 			$scope.switchMainView = (viewType:MainViewType)=>{this.switchMainView(viewType);};
 
-			var recordSanitizer = new Security.RecordSanitizer($sce);
-
-			var tl = new Models.ThreadList(null, recordSanitizer);
+			var tl = new Models.ThreadList({
+				filter: {
+					limit: 100,
+				},
+				sorter: {
+					key: "timestamp",
+				},
+				recordListOption: {
+					filter: {
+						limit: 100,
+					},
+					sorter: {
+						key: "timestamp",
+					},
+					sanitizer: new Security.RecordSanitizer($sce),
+				},
+			});
 			tl.reload({
 				"success": ()=>{
 					$scope.threads = tl;
 					$scope.currentThread = tl.get(0);
 					if($scope.currentThread){
-						$scope.currentThread.reload({
+						$scope.currentThread.update({
 							"success": ()=>{
 								$scope.$apply();
 							},
@@ -468,7 +603,7 @@ module Controllers{
 			this.$scope.currentThread = thread;
 			this.switchMainView(MainViewType.thread);
 			if(this.$scope.currentThread){
-				this.$scope.currentThread.reload({
+				this.$scope.currentThread.update({
 					"success": ()=>{
 						this.$scope.$apply();
 					},
@@ -527,7 +662,7 @@ module Controllers{
 		postResponse(){
 			var callback = <API.IAjaxCallback>{
 				"success": ()=>{
-					this.$scope.currentThread.reload({
+					this.$scope.currentThread.update({
 						"success": ()=>{
 							this.$scope.$apply();
 						},

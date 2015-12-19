@@ -2,6 +2,7 @@
 set -euv
 export MIKA_DB_ADDR=${MYSQL_PORT_3306_TCP#tcp://}
 
+useradd -u ${MIKA_UID} -s /bin/sh -m mika
 mkdir -pm 770 /run/mika
 chown mika:mika /run/mika
 

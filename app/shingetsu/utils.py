@@ -53,19 +53,14 @@ def httpGet(http_addr):
 	log.isEnabledFor(logging.DEBUG) and log.debug('HTTP_GET '+http_addr)
 	headers = {
 			'User-Agent': '{protocol} ({name} {version})'.format(protocol=' '.join(settings.PROTOCOLS), name=settings.APPLICATION_NAME, version=settings.VERSION),
-			'Accept-encoding': 'gzip',
+			'Accept-Encoding': 'gzip',
 			}
 	request = Request(http_addr, headers=headers)
 	with urlopen(request, timeout=settings.HTTP_TIMEOUT) as httpsock:
-		data = httpsock.read()
-		try:
-			return data.decode('utf-8')
-		except UnicodeDecodeError:
-			# sakuの不適切なレスポンスに対処
-			# sakuは、Content-Encodingを指定せずにgzip圧縮されたレスポンスを返す場合がある
-			bi = io.BytesIO(data)
-			text = gzip.GzipFile(fileobj=bi, mode='rb')
-			return text.read().decode('utf-8')
+		if httpsock.info().get('Content-Encoding') == 'gzip':
+			return gzip.GzipFile(fileobj=httpsock, mode='rb').read().decode('utf-8')
+		else:
+			return httpsock.read().decode('utf-8')
 
 def str2recordInfo(string):
 	for record in string.splitlines():

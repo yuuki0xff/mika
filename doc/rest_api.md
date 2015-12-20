@@ -1,6 +1,6 @@
 JSON APIの仕様
 =============
-バージョン: 0.1
+バージョン: 0.1.1
 
 データエンコーディング
 ----------------------
@@ -72,10 +72,12 @@ timestamp           | 必須  | TIMESTAM          | 書き込み時刻を表す�
     "name": String,
     "mail": String,
     "body": String,
-    "attach": Boolean
+    "attach": Boolean,
+    "suffix": String
 }
 ```
-RECORD\_INFOにname,mail,body,attachを追加した型である。
+RECORD\_INFOにname,mail,body,attach,suffixを追加した型である。
+なお、suffixは添付ファイルの拡張子である。
 
 API.versions
 -----------

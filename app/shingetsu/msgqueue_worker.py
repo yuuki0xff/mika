@@ -39,7 +39,8 @@ def getRecord(msg):
 				try:
 					timestamp, hex_id, body = record
 					bin_id = a2b_hex(hex_id)
-				except binascii.Error:
+				except binascii.Error as e:
+					log.isEnabledFor(logging.INFO) and log.info('getRecord: Fail {} {} {}'.format(thread_id, http_addr, str(e)))
 					continue
 				try:
 					timestamp = int(timestamp)
@@ -48,7 +49,8 @@ def getRecord(msg):
 					Record.add(s, thread_id, timestamp, bin_id, body)
 					log.isEnabledFor(logging.INFO) and log.info('getRecord: Add {}/{}/{} {}'.format(thread_id, timestamp, b2a_hex(bin_id), addr))
 					s.commit()
-				except (binascii.Error, sqlalchemy.exc.StatementError):
+				except (binascii.Error, sqlalchemy.exc.StatementError) as e:
+					log.isEnabledFor(logging.INFO) and log.info('getRecord: Fail {} {} {}'.format(thread_id, http_addr, str(e)))
 					s.rollback()
 					Record.delete(s, thread_id, timestamp, bin_id)
 					s.commit()
@@ -90,12 +92,12 @@ def _getRecent_worker(host):
 	except URLError:
 		return
 	with Session() as s:
-		fileNames = []
+		fileNames = set()
 		for line in str2recordInfo(recent):
 			timestamp, recordId, fileName = line[0:3]
 			if fileName.split('_')[0] not in ('thread'):
 				continue
-			fileNames.append(fileName)
+			fileNames.add(fileName)
 
 		for fileName in sorted(fileNames):
 			try:

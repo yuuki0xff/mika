@@ -82,7 +82,8 @@ class records(View):
 						Record.name,
 						Record.mail,
 						Record.body,
-						sql_func.length(Record.attach).label('attach_len')).first()
+						sql_func.length(Record.attach).label('attach_len'),
+						Record.suffix).first()
 				if r:
 					records.append({
 						'id': b2a_hex(r.bin_id).decode('ascii'),
@@ -91,6 +92,7 @@ class records(View):
 						'mail': r.mail,
 						'body': r.body,
 						'attach': bool(r.attach_len),
+						'suffix': r.suffix,
 						})
 			else:
 				""" 複数のレコードを返す方のAPI """
@@ -110,7 +112,8 @@ class records(View):
 							Record.name,
 							Record.mail,
 							Record.body,
-							sql_func.length(Record.attach).label('attach_len'))
+							sql_func.length(Record.attach).label('attach_len'),
+							Record.suffix)
 				for r in matchRecords:
 					records.append({
 						'id': b2a_hex(r.bin_id).decode('ascii'),
@@ -119,6 +122,7 @@ class records(View):
 						'mail': r.mail,
 						'body': r.body,
 						'attach': bool(r.attach_len),
+						'suffix': r.suffix,
 						})
 			obj = {
 					'records': records,

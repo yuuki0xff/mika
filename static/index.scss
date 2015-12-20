@@ -59,11 +59,20 @@ body{
 				.header{
 					margin: 0;
 					padding: 0;
+
+					a{
+						color: #0af;
+						text-decoration: none;
+						font-weight: bold;
+					}
 				}
 				.body{
 					margin: 0;
 					padding: 0.7em;
 					padding-top: 0.5em;
+				}
+				img{
+					max-width: 100%;
 				}
 			}
 		}

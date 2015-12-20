@@ -5,9 +5,9 @@ from sqlalchemy.orm.scoping import scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 from contextlib import contextmanager
 from datetime import datetime
-from binascii import b2a_hex
+from binascii import b2a_hex, a2b_hex
 from base64 import b64decode
-from lib.utils import timestamp2str, timestamp2datetime, datetime2timestamp
+from lib.utils import timestamp2str, timestamp2datetime, datetime2timestamp, str2timestamp
 import time
 from core import settings
 
@@ -152,8 +152,8 @@ class Record(Base):
 		rec.mail = fields.get('mail', '')
 		rec.body = fields.get('body', '')
 		if 'remove_id' in fields:
-			rec.remove_id = fields.get('remove_id')
-			rec.remove_stamp = fields.get('remove_stamp')
+			rec.remove_id = a2b_hex(fields.get('remove_id'))
+			rec.remove_stamp = str2timestamp(fields.get('remove_stamp'))
 		if 'attach' in fields:
 			rec.attach = b64decode(fields['attach'])
 			rec.suffix = fields['suffix']

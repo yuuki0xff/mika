@@ -32,7 +32,6 @@ CREATE TABLE record(
 	mail CHAR(255),
 	body MEDIUMTEXT NOT NULL,
 	-- attach
-	attach MEDIUMBLOB,
 	suffix CHAR(8),
 	-- remove_notify
 	remove_id BINARY(16),
@@ -44,7 +43,6 @@ CREATE TABLE record(
 	sign CHAR(64),
 	target CHAR(64),
 	-- raw
-	raw_body MEDIUMTEXT NOT NULL,
 	PRIMARY KEY(record_id),
 	UNIQUE(thread_id, timestamp, bin_id),
 	FOREIGN KEY(thread_id) REFERENCES thread(id)
@@ -55,6 +53,16 @@ CREATE TABLE record_removed(
 	bin_id BINARY(16),
 	PRIMARY KEY(thread_id, timestamp, bin_id),
 	FOREIGN KEY(thread_id) REFERENCES thread(id)
+);
+CREATE TABLE record_attach(
+	record_id INT UNSIGNED,
+	attach MEDIUMBLOB,
+	PRIMARY KEY(record_id)
+);
+CREATE TABLE record_raw(
+	record_id INT UNSIGNED,
+	raw_body MEDIUMTEXT NOT NULL,
+	PRIMARY KEY(record_id)
 );
 
 CREATE TABLE recent(

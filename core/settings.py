@@ -132,13 +132,12 @@ LOGGING = {
             'class':'logging.StreamHandler',
             'formatter': 'standard',
         },
-		'logfile':{
-			'level': 'DEBUG',
-			'class': 'logging.handlers.TimedRotatingFileHandler',
-			'formatter': 'standard',
-			'when': 'D',
-			'filename': '/srv/log/mika.log'
-		},
+        'logfile':{
+            'level': 'DEBUG',
+            'class': 'logging.handlers.WatchedFileHandler',
+            'formatter': 'standard',
+            'filename': '/srv/log/mika.log'
+        },
     },
     'loggers': {
         'django': {

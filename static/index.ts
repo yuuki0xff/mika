@@ -535,9 +535,10 @@ module Models{
 
 module Controllers{
 	enum MainViewType{
-		"threadList",
-		"thread",
-		"newThread",
+		"threadList" = 0,
+		"tagList" = 1,
+		"newThread" = 2,
+		"thread" = 3,
 	}
 	enum MenuViewType{
 		"tag",
@@ -547,14 +548,16 @@ module Controllers{
 	interface INewThread{
 		title: string;
 	}
+	interface IView{
+		main: MainViewType;
+	}
 
 	interface INewRecord extends Models.IRecord{}
 
 	interface IScope extends angular.IScope{
 		MainViewType: any;
-		mainView: MainViewType;
 		MenuViewType: any;
-		menuView: MenuViewType;
+		viewStatus: IView;
 
 		threads: Models.IThreadList;
 		currentThread: Models.IThread;
@@ -573,7 +576,9 @@ module Controllers{
 	export class MikaCtrl{
 		constructor(private $scope:IScope, $sce){
 			$scope.MainViewType = MainViewType;
-			$scope.mainView = MainViewType.thread;
+			$scope.viewStatus = {
+				main: MainViewType.thread,
+			};
 
 			$scope.setCurrentThread = (thread:Models.Thread)=>{this.setCurrentThread(thread);};
 			$scope.switchMainView = (viewType:MainViewType)=>{this.switchMainView(viewType);};
@@ -628,23 +633,10 @@ module Controllers{
 			}
 		}
 		switchMainView(viewType:MainViewType){
-			this.$scope.mainView = viewType;
-			if(this.$scope.mainView != MainViewType.thread){
+			this.$scope.viewStatus.main = viewType;
+			if(this.$scope.viewStatus.main != MainViewType.thread){
 				this.$scope.currentThread = null;
 			}
-		}
-	}
-
-	export class MenuCtrl{
-		constructor(private $scope:IScope){
-			$scope.MenuViewType = MenuViewType;
-			$scope.menuView = MenuViewType.thread;
-
-			$scope.setMenuViewType = (viewType:MenuViewType)=>{this.setMenuViewType(viewType);};
-		}
-
-		setMenuViewType(viewType:MenuViewType){
-			this.$scope.menuView = viewType;
 		}
 	}
 
@@ -695,8 +687,7 @@ module Controllers{
 	}
 }
 
-angular.module("mika", ["ngSanitize"])
+angular.module("mika", ["ngSanitize", "ngMaterial"])
 .controller("MikaCtrl", Controllers.MikaCtrl)
-.controller("MenuCtrl", Controllers.MenuCtrl)
 .controller("ThreadCtrl", Controllers.ThreadCtrl);
 

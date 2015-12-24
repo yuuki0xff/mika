@@ -325,7 +325,7 @@ module Models{
 			}
 			if(this.option.sorter.key){
 				var funcList = {
-					timestamp: (a: IRecord, b: IRecord)=>{ return a.timestamp - b.timestamp; },
+					timestamp: (a: IRecord, b: IRecord)=>{ return b.timestamp - a.timestamp; },
 				};
 				func = funcList[this.option.sorter.key];
 			}else{
@@ -535,10 +535,8 @@ module Models{
 
 module Controllers{
 	enum MainViewType{
-		"threadList" = 0,
-		"tagList" = 1,
-		"newThread" = 2,
-		"thread" = 3,
+		"newThread",
+		"thread",
 	}
 	enum MenuViewType{
 		"tag",
@@ -687,7 +685,7 @@ module Controllers{
 	}
 }
 
-angular.module("mika", ["ngSanitize", "ngMaterial"])
+angular.module("mika", ["ngSanitize", "ngMaterial", "relativeDate"])
 .controller("MikaCtrl", Controllers.MikaCtrl)
 .controller("ThreadCtrl", Controllers.ThreadCtrl);
 

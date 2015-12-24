@@ -5,110 +5,111 @@
 <link rel='stylesheet' type='text/css' href='./index.css' />
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
-<div class='mika' ng-app='mika' ng-controller='MikaCtrl'>
-	<md-toolbar class='md-toolbar-tools'>
-		<md-button class='md-icon-button'>
-			Mika
-		</md-button>
-		<span flex></span>
-		<h1 class='title'>
-			<span ng-if='viewStatus.main == MainViewType.thread'>{{currentThread.title}}</span>
-			<span ng-if='viewStatus.main != MainViewType.thread'>P2P Anonymouse BBS</span>
-		</h1>
-		<span flex></span>
-	</md-toolbar>
+<div class='mika' ng-app='mika' ng-controller='MikaCtrl' layout='row'>
+	<md-sidenav class='sidenav md-sidenav md-sitenav-left' md-component-id='left' md-is-locked-open='$mdMedia("gt-sm")' flex>
+		<md-content>
+			<!-- threads -->
+			<md-list class='threadList'>
+				<md-list-item>
+					<md-button href='' ng-click='switchMainView(MainViewType.newThread)'>Create Thread</md-button>
+				</md-list-item>
+				<md-list-item ng-repeat='thread in threads.threads' thread_name='{{thread.title}}'>
+					<md-button href='' ng-click='setCurrentThread(thread)'>{{thread.title}}</md-button>
+					<span title='The number of posts'>{{thread.records}}</span>
+				</md-list-item>
+			</md-list>
+		</md-content>
+	</md-sidenav>
 
-	<div ng-controller='ThreadCtrl'>
-	<md-tabs md-dynamic-height md-selected='viewStatus.main' md-autoselect>
-		<md-tab label='Threads'>
-			<md-tab-body>
-				<md-list class='threadList'>
-					<md-list-item>
-						<md-button href='' ng-click='switchMainView(MainViewType.newThread)'>New Thread</md-button>
-					</md-list-item>
-					<md-list-item ng-repeat='thread in threads.threads' thread_name='{{thread.title}}'>
-						<md-button href='' ng-click='setCurrentThread(thread)'>{{thread.title}}</md-button>
-					</md-list-item>
-				</md-list>
-			</md-tab-body>
-		</md-tab>
-		<md-tab label='Tags'>
-			<md-tab-body>
-				This function is not implemented yet.
-			</md-tab-body>
-		</md-tab>
-		<md-tab label='New Thread'>
-			<md-tab-body>
-				<form ng-submit='postThread()'>
-					<md-input-container>
-						<label>スレッド名</label>
-						<input ng-model='newThread.title' />
+	<div ng-controller='ThreadCtrl' flex layout='column'>
+		<!-- toolbar -->
+		<md-toolbar class='md-toolbar-tools header-fixed'>
+			<md-button class='md-icon-button' hide-gt-sm>
+				<md-icon class='material-icons'>menu</md-icon>
+			</md-button>
+			<span flex></span>
+			<h1 class='title'>
+				<span ng-if='viewStatus.main == MainViewType.thread'>{{currentThread.title}}</span>
+				<span ng-if='viewStatus.main != MainViewType.thread'>P2P Anonymouse BBS</span>
+			</h1>
+			<span flex></span>
+			<md-button href='' class='md-icon-button' aria-label='投稿' ng-if='viewStatus.main == MainViewType.thread' ng-click=''>
+				<md-icon class='material-icons'>create</md-icon>
+			</md-button>
+		</md-toolbar>
+
+		<!-- create thread -->
+		<div ng-if='viewStatus.main == MainViewType.newThread'>
+			<form ng-submit='postThread()'>
+				<md-input-container>
+					<label>Thread Name</label>
+					<input ng-model='newThread.title' />
+				</md-input-container>
+				<md-button href='' class='md-icon-button' aria-label='表示' ng-click='postThread()'>
+					<md-icon class='material-icons'>arrow_forward</md-icon>
+				</md-button>
+			</form>
+		</div>
+
+		<!-- thread viewer -->
+		<div class='thread_view' ng-if='viewStatus.main == MainViewType.thread'>
+			<div class='post'>
+				<form ng-submit='postResponse()'>
+<!--                    <md-input-container>-->
+<!--                        <label>名前</label>-->
+<!--                        <input name='name' ng-model='newResponse.name' />-->
+<!--                    </md-input-container>-->
+<!--                    <md-input-container>-->
+<!--                        <label>メール</label>-->
+<!--                        <input name='mail' ng-model='newResponse.mail' />-->
+<!--                    </md-input-container>-->
+					<md-input-container class='md-block'>
+						<label>本文</label>
+						<textarea name='body' ng-model='newResponse.body'></textarea>
 					</md-input-container>
-					<md-button href='' class='md-icon-button' aria-label='表示' ng-click='postThread()'>
-						<md-icon class='material-icons'>arrow_forward</md-icon>
-					</md-button>
+					<md-button href='' ng-click='postResponse()'>投稿</md-button>
 				</form>
-			</md-tab-body>
-		</md-tab>
-		<md-tab label='Thread' ng-disabled='currentThread === null'>
-			<md-tab-body>
-				<div class='main'>
-					<div class='thread_view'>
-						<div class='record_list'>
-							<md-card  ng-repeat='record in currentThread.recordList.records'>
-								<md-card-header-text>
-									<span class='id'>{{record.record_id | limitTo: 8}}</span>
-									<span ng-bind-html='record.htmlName' class='name'></span>
-									[<span ng-bind-html='record.htmlMail' class='mail'></span>]
-									<span class='datetime'>{{record.timestamp * 1000 | date:'yyyy-MM-dd HH:mm:ss'}}</span>
-									<span ng-if='record.fileType == "unknow"'><a ng-href='{{record.fileUrl}}' />添付ファイル.{{record.suffix}}</a></span>
-								</md-card-header-text>
-								<img ng-if='record.fileType == "img"' ng-src='{{record.fileUrl}}' />
-								<md-card-content>
-									<p ng-bind-html='record.htmlBody' class='body'></p>
-								</md-card-content>
-							</md-card>
+			</div>
+			<div class='record_list'>
+				<md-card  ng-repeat='record in currentThread.recordList.records'>
+					<md-card-header-text>
+						<div class='info_wrap'>
+							<span class='id'>{{record.record_id | limitTo: 8}}</span>
+							<span ng-if='record.name' ng-bind-html='record.htmlName' class='name'></span>
+							<span ng-if='record.mail'>[<span ng-bind-html='record.htmlMail' class='mail'></span>]</span>
+							<span ng-if='record.fileType == "unknow"'><a ng-href='{{record.fileUrl}}' />添付ファイル.{{record.suffix}}</a></span>
 						</div>
-						<div class='post'>
-							<form ng-submit='postResponse()'>
-								<md-input-container>
-									<label>名前</label>
-									<input name='name' ng-model='newResponse.name' />
-								</md-input-container>
-								<md-input-container>
-									<label>メール</label>
-									<input name='mail' ng-model='newResponse.mail' />
-								</md-input-container>
-								<md-input-container class='md-block'>
-									<label>本文</label>
-									<textarea name='body' ng-model='newResponse.body'></textarea>
-								</md-input-container>
-								<md-button href='' ng-click='postResponse()'>投稿</button>
-							</form>
+						<div class='datetime_wrap'>
+							<span class='datetime'>{{record.timestamp * 1000 | relativeDate}}</span>
 						</div>
-					</div>
-				</div>
-			</md-tab-body>
-		</md-tab>
-	</md-tabs>
-
-	<!-- jQuery -->
-	<script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js'></script>
-
-	<!-- Angular -->
-	<script src='https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.8/angular.min.js'></script>
-	<script src='https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.8/angular-sanitize.min.js'></script>
-	<script src='https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.8/angular-animate.min.js'></script>
-	<script src='https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.8/angular-aria.min.js'></script>
-	<script src='https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.8/angular-messages.min.js'></script>
-	<script src='https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.8/angular-route.min.js'></script>
-
-	<!-- Angular Material -->
-	<script src='https://cdnjs.cloudflare.com/ajax/libs/angular-material/1.0.1/angular-material.min.js'></script>
-
-	<!-- Other scripts -->
-	<script src='./lib/sanitize.js'></script>
-	<script src='./index.js'></script>
+					</md-card-header-text>
+					<img ng-if='record.fileType == "img"' ng-src='{{record.fileUrl}}' />
+					<md-card-content>
+						<p ng-bind-html='record.htmlBody' class='body'></p>
+					</md-card-content>
+				</md-card>
+			</div>
+		</div>
+	</div>
 </div>
+
+<!-- jQuery -->
+<script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js'></script>
+
+<!-- Angular -->
+<script src='https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.8/angular.min.js'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.8/angular-sanitize.min.js'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.8/angular-animate.min.js'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.8/angular-aria.min.js'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.8/angular-messages.min.js'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.8/angular-route.min.js'></script>
+
+<!-- Angular Material -->
+<script src='https://cdnjs.cloudflare.com/ajax/libs/angular-material/1.0.1/angular-material.min.js'></script>
+
+<!-- Other scripts -->
+<script src='./lib/sanitize.js'></script>
+<script src='./lib/angular-relative-date.min.js'></script>
+<script src='./index.js'></script>
 </html>
 

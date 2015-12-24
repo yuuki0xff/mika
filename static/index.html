@@ -80,7 +80,7 @@
 							<span ng-if='record.fileType == "unknow"'><a ng-href='{{record.fileUrl}}' />添付ファイル.{{record.suffix}}</a></span>
 						</div>
 						<div class='datetime_wrap'>
-							<span class='datetime'>{{record.timestamp * 1000 | relativeDate}}</span>
+							<span class='datetime' title='{{record.timestamp * 1000 | date:"yyyy-MM-dd HH:mm:ss"}}'>{{record.timestamp * 1000 | relativeDate}}</span>
 						</div>
 					</md-card-header-text>
 					<img ng-if='record.fileType == "img"' ng-src='{{record.fileUrl}}' />

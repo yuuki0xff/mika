@@ -11,7 +11,7 @@
 			<!-- threads -->
 			<md-list class='threadList'>
 				<md-list-item>
-					<md-button href='' ng-click='switchMainView(MainViewType.newThread)'>Create Thread</md-button>
+					<md-button href='' ng-click='switchMainView(MainViewType.createThread)'>Create Thread</md-button>
 				</md-list-item>
 				<md-list-item ng-repeat='thread in threads.threads' thread_name='{{thread.title}}'>
 					<md-button href='' ng-click='setCurrentThread(thread)'>{{thread.title}}</md-button>
@@ -39,11 +39,11 @@
 		</md-toolbar>
 
 		<!-- create thread -->
-		<div ng-if='viewStatus.main == MainViewType.newThread'>
+		<div class='create_thread_view' ng-if='viewStatus.main == MainViewType.createThread'>
 			<form ng-submit='postThread()'>
 				<md-input-container>
 					<label>Thread Name</label>
-					<input ng-model='newThread.title' />
+					<input ng-model='createThread.title' />
 				</md-input-container>
 				<md-button href='' class='md-icon-button' aria-label='表示' ng-click='postThread()'>
 					<md-icon class='material-icons'>arrow_forward</md-icon>

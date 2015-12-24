@@ -535,7 +535,7 @@ module Models{
 
 module Controllers{
 	enum MainViewType{
-		"newThread",
+		"createThread",
 		"thread",
 	}
 	enum MenuViewType{
@@ -610,7 +610,7 @@ module Controllers{
 							"error": ()=>{return;},
 						});
 					}else{
-						$scope.switchMainView(MainViewType.newThread);
+						$scope.switchMainView(MainViewType.createThread);
 					}
 					$scope.$apply();
 				},

@@ -13,6 +13,12 @@ body{
 }
 
 
+.mika .sidenav,
+.mika .sidenav md-content{
+    background: #1a237e;
+    color: #fff;
+}
+
 .mika{
 	form.post{
 		border-bottom: solid 1px $borderColor;

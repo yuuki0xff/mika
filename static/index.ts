@@ -690,6 +690,7 @@ module Controllers{
 			this.$scope.threads.add(this.$scope.newThread.title, <API.IAjaxCallback>{
 				"success": (thread)=>{
 					this.$scope.setCurrentThread(thread);
+					this.$scope.newThread.title = null;
 					this.$rootScope.$apply();
 				},
 				"error": ()=>{return;},

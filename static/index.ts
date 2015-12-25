@@ -568,6 +568,8 @@ module Controllers{
 		setCurrentThread(thread:Models.Thread): void;
 		switchMainView(viewType:MainViewType): void;
 		setMenuViewType(viewType:MenuViewType): void;
+		toggleSidenav(): void;
+		closeSidenav(): void;
 
 		newRecord: INewRecord;
 	}
@@ -590,7 +592,7 @@ module Controllers{
 	}
 
 	export class MikaCtrl{
-		constructor(private $scope:IScope, $sce){
+		constructor(private $scope:IScope, $sce, private $mdSidenav){
 			$scope.MainViewType = MainViewType;
 			$scope.viewStatus = {
 				main: MainViewType.thread,
@@ -606,6 +608,8 @@ module Controllers{
 
 			$scope.setCurrentThread = (thread:Models.Thread)=>{this.setCurrentThread(thread);};
 			$scope.switchMainView = (viewType:MainViewType)=>{this.switchMainView(viewType);};
+			$scope.toggleSidenav = ()=>{this.toggleSidenav();};
+			$scope.closeSidenav = ()=>{this.closeSidenav();};
 
 			var tl = new Models.ThreadList({
 				filter: {
@@ -661,6 +665,12 @@ module Controllers{
 			if(this.$scope.viewStatus.main != MainViewType.thread){
 				this.$scope.currentThread = null;
 			}
+		}
+		toggleSidenav(){
+			this.$mdSidenav("left").toggle();
+		}
+		closeSidenav(){
+			this.$mdSidenav("left").close();
 		}
 	}
 

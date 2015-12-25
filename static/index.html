@@ -54,20 +54,20 @@
 		<!-- thread viewer -->
 		<div class='thread_view' ng-if='viewStatus.main == MainViewType.thread'>
 			<div class='post'>
-				<form ng-submit='postResponse()'>
+				<form ng-submit='postRecord()'>
 <!--                    <md-input-container>-->
 <!--                        <label>名前</label>-->
-<!--                        <input name='name' ng-model='newResponse.name' />-->
+<!--                        <input name='name' ng-model='newRecord.name' />-->
 <!--                    </md-input-container>-->
 <!--                    <md-input-container>-->
 <!--                        <label>メール</label>-->
-<!--                        <input name='mail' ng-model='newResponse.mail' />-->
+<!--                        <input name='mail' ng-model='newRecord.mail' />-->
 <!--                    </md-input-container>-->
 					<md-input-container class='md-block'>
 						<label>本文</label>
-						<textarea name='body' ng-model='newResponse.body'></textarea>
+						<textarea name='body' ng-model='newRecord.body'></textarea>
 					</md-input-container>
-					<md-button href='' ng-click='postResponse()'>投稿</md-button>
+					<md-button href='' ng-click='postRecord()'>投稿</md-button>
 				</form>
 			</div>
 			<div class='record_list'>

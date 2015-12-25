@@ -567,8 +567,8 @@ module Controllers{
 
 		newThread: INewThread;
 		postThread(): void;
-		newResponse: INewRecord;
-		postResponse(): void;
+		newRecord: INewRecord;
+		postRecord(): void;
 	}
 
 	export class MikaCtrl{
@@ -645,14 +645,14 @@ module Controllers{
 			};
 			$scope.postThread = ()=>{return this.postThread();};
 
-			$scope.newResponse = <INewRecord>{
+			$scope.newRecord = <INewRecord>{
 				"name": null,
 				"mail": null,
 				"body": null,
 				"attach": null,
 				"suffix": null,
 			};
-			$scope.postResponse = ()=>{return this.postResponse();};
+			$scope.postRecord = ()=>{return this.postRecord();};
 		}
 
 		postThread(){
@@ -666,12 +666,12 @@ module Controllers{
 			return false;
 		}
 
-		postResponse(){
+		postRecord(){
 			var callback = <API.IAjaxCallback>{
 				"success": ()=>{
 					this.$scope.currentThread.update({
 						"success": ()=>{
-							this.$scope.newResponse.body = "";
+							this.$scope.newRecord.body = "";
 							this.$scope.$apply();
 						},
 						"error": ()=>{return;},
@@ -679,7 +679,7 @@ module Controllers{
 				},
 				"error": ()=>{return;},
 			};
-			var record = this.$scope.newResponse;
+			var record = this.$scope.newRecord;
 			this.$scope.currentThread.post(record, callback);
 		}
 	}

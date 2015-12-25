@@ -3,6 +3,22 @@ $borderColor: #3f51b5;
 $labelColor: #1a237e;
 
 .mika{
+	form.post{
+		border-bottom: solid 1px $borderColor;
+
+		label{
+			color: $labelColor;
+		}
+
+		textarea, input{
+			border-bottom: solid 1px #1a237e;
+
+			&:focus{
+				border-bottom: solid 4px #1a237e;
+			}
+		}
+	}
+
 	md-sidenav.sidenav{
 		max-width: 300px;
 		overflow: auto;
@@ -14,22 +30,10 @@ $labelColor: #1a237e;
 		text-align: left;
 	}
 
-	.create_thread_view{
-		label{
-			color: $labelColor;
-		}
-	}
-
 	.thread_view{
-		.post{
-			border-bottom: solid 1px $borderColor;
-
-			label{
-				color: $labelColor;
-			}
-			// submit button
-			a{
-				font-weight: bold;
+		.post.active{
+			textarea{
+				min-height: 10em;
 			}
 		}
 

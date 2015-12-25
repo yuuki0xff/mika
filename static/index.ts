@@ -1,5 +1,6 @@
 /// <reference path="./typings/jquery/jquery.d.ts" />
 /// <reference path="./typings/angularjs/angular.d.ts" />
+/// <reference path="./typings/angular-material/angular-material.d.ts" />
 /// <reference path="./lib/sanitize.d.ts" />
 
 module Security{
@@ -551,6 +552,9 @@ module Controllers{
 	}
 
 	interface INewRecord extends Models.IRecord{}
+	interface INewRecordForm{
+		isOpen: boolean;
+	}
 
 	interface IScope extends angular.IScope{
 		MainViewType: any;
@@ -565,10 +569,24 @@ module Controllers{
 		switchMainView(viewType:MainViewType): void;
 		setMenuViewType(viewType:MenuViewType): void;
 
-		newThread: INewThread;
-		postThread(): void;
 		newRecord: INewRecord;
+	}
+	interface IPostFormScope extends IScope{
+		useFullScreen: boolean;
+		newThread: INewThread;
+		newRecordForm: INewRecordForm;
+
+		postThread(): void;
 		postRecord(): void;
+		showPostForm(event): void;
+		focus(event): void;
+	}
+	interface IPostFormDialogScope extends angular.IScope{
+		newRecord: INewRecord;
+
+		hide(): void;
+		cancel(): void;
+		post(): void;
 	}
 
 	export class MikaCtrl{
@@ -576,6 +594,14 @@ module Controllers{
 			$scope.MainViewType = MainViewType;
 			$scope.viewStatus = {
 				main: MainViewType.thread,
+			};
+
+			$scope.newRecord = <INewRecord>{
+				"name": null,
+				"mail": null,
+				"body": null,
+				"attach": null,
+				"suffix": null,
 			};
 
 			$scope.setCurrentThread = (thread:Models.Thread)=>{this.setCurrentThread(thread);};
@@ -639,20 +665,25 @@ module Controllers{
 	}
 
 	export class ThreadCtrl{
-		constructor(private $scope:IScope, private $rootScope){
+		constructor(private $scope:IPostFormScope, private $rootScope, private $mdMedia, private $mdDialog){
 			$scope.newThread = <INewThread>{
 				"title": null,
 			};
-			$scope.postThread = ()=>{return this.postThread();};
-
-			$scope.newRecord = <INewRecord>{
-				"name": null,
-				"mail": null,
-				"body": null,
-				"attach": null,
-				"suffix": null,
+			$scope.newRecordForm = {
+				isOpen: false,
 			};
+			$scope.postThread = ()=>{return this.postThread();};
 			$scope.postRecord = ()=>{return this.postRecord();};
+
+			$scope.showPostForm = (ev)=>{return this.showPostForm(ev);};
+			$scope.$watch(()=>{
+				return $mdMedia("xs") || $mdMedia("sm");
+			}, (useFullScreen)=>{
+				$scope.useFullScreen = useFullScreen === true;
+			});
+			$scope.focus = (event)=>{
+				$scope.newRecordForm.isOpen = true;
+			};
 		}
 
 		postThread(){
@@ -681,6 +712,41 @@ module Controllers{
 			};
 			var record = this.$scope.newRecord;
 			this.$scope.currentThread.post(record, callback);
+		}
+
+		showPostForm(event){
+			this.$mdDialog.show({
+				controller: PostFormDialogCtrl,
+				template: angular.element("#postFormDialog").html(),
+				parent: angular.element(".mika"),
+				targetEvent: event,
+				clickOutsideToClose: true,
+				fullscreen: this.$scope.useFullScreen,
+				scope: this.$scope.$new(),
+			}).then((ret)=>{
+				// post button clicked.
+				this.postRecord();
+			}, ()=>{
+				// cancelled.
+			});
+		};
+
+	}
+	export class PostFormDialogCtrl{
+		constructor(private $scope:IPostFormDialogScope, private $mdDialog){
+			$scope.hide = ()=>{return this.hide();};
+			$scope.cancel = ()=>{return this.cancel();};
+			$scope.post = ()=>{return this.post();};
+		}
+
+		hide(){
+			this.$mdDialog.hide();
+		}
+		cancel(){
+			this.$mdDialog.cancel();
+		}
+		post(){
+			this.$mdDialog.hide("post");
 		}
 	}
 }

@@ -33,19 +33,19 @@
 				<span ng-if='viewStatus.main != MainViewType.thread'>P2P Anonymouse BBS</span>
 			</h1>
 			<span flex></span>
-			<md-button href='' class='md-icon-button' aria-label='投稿' ng-if='viewStatus.main == MainViewType.thread' ng-click=''>
+			<md-button href='' class='md-icon-button' aria-label='投稿' ng-if='viewStatus.main == MainViewType.thread' ng-click='showPostForm($event)'>
 				<md-icon class='material-icons'>create</md-icon>
 			</md-button>
 		</md-toolbar>
 
 		<!-- create thread -->
 		<div class='create_thread_view' ng-if='viewStatus.main == MainViewType.createThread'>
-			<form ng-submit='postThread()'>
+			<form class='post' ng-submit='postThread()'>
 				<md-input-container>
 					<label>Thread Name</label>
 					<input ng-model='createThread.title' />
 				</md-input-container>
-				<md-button href='' class='md-icon-button' aria-label='表示' ng-click='postThread()'>
+				<md-button href='' class='md-raised md-icon-button md-primary' aria-label='表示' ng-click='postThread()'>
 					<md-icon class='material-icons'>arrow_forward</md-icon>
 				</md-button>
 			</form>
@@ -53,23 +53,26 @@
 
 		<!-- thread viewer -->
 		<div class='thread_view' ng-if='viewStatus.main == MainViewType.thread'>
-			<div class='post'>
-				<form ng-submit='postRecord()'>
-<!--                    <md-input-container>-->
-<!--                        <label>名前</label>-->
-<!--                        <input name='name' ng-model='newRecord.name' />-->
-<!--                    </md-input-container>-->
-<!--                    <md-input-container>-->
-<!--                        <label>メール</label>-->
-<!--                        <input name='mail' ng-model='newRecord.mail' />-->
-<!--                    </md-input-container>-->
-					<md-input-container class='md-block'>
-						<label>本文</label>
-						<textarea name='body' ng-model='newRecord.body'></textarea>
+			<form class='post' ng-class='{active: newRecordForm.isOpen}' ng-submit='postRecord()'>
+				<div ng-if='newRecordForm.isOpen'>
+					<md-input-container>
+						<label>名前</label>
+						<input name='name' ng-model='newRecord.name' />
 					</md-input-container>
-					<md-button href='' ng-click='postRecord()'>投稿</md-button>
-				</form>
-			</div>
+					<md-input-container>
+						<label>メール</label>
+						<input name='mail' ng-model='newRecord.mail' />
+					</md-input-container>
+				</div>
+				<md-input-container class='md-block'>
+					<label ng-if='! newRecordForm.isOpen'>書き込む</label>
+					<label ng-if='newRecordForm.isOpen'>本文</label>
+					<textarea name='body' ng-model='newRecord.body' ng-focus='focus($event)'></textarea>
+				</md-input-container>
+				<div ng-if='newRecordForm.isOpen'>
+					<md-button href='' class='md-raised md-primary' ng-click='postRecord()'>投稿</md-button>
+				</div>
+			</form>
 			<div class='record_list'>
 				<md-card  ng-repeat='record in currentThread.recordList.records'>
 					<md-card-header-text>
@@ -91,6 +94,39 @@
 			</div>
 		</div>
 	</div>
+</div>
+
+<!-- templates -->
+<div hidden>
+	<md-dialog aria-label='postFormDialog' id='postFormDialog'>
+		<md-toolbar>
+			<div class='md-toolbar-tools'>
+				<span flex></span>
+				<h2>書き込み</h2>
+				<span flex></span>
+				<md-button href='' class='md-icon-button' ng-click='cancel()'>
+					<md-icon class='material-icons'>close</md-icon>
+				</md-button>
+			</div>
+		</md-toolbar>
+		<md-dialog-content>
+			<form class='post' ng-submit='post()'>
+				<md-input-container>
+					<label>名前</label>
+					<input name='name' ng-model='newRecord.name' />
+				</md-input-container>
+				<md-input-container>
+					<label>メール</label>
+					<input name='mail' ng-model='newRecord.mail' />
+				</md-input-container>
+				<md-input-container class='md-block'>
+					<label>本文</label>
+					<textarea name='body' ng-model='newRecord.body'></textarea>
+				</md-input-container>
+				<md-button href='' class='md-raised md-primary' ng-click='post()'>投稿</md-button>
+			</form>
+		</md-dialog-content>
+	</md-dialog>
 </div>
 
 <!-- jQuery -->

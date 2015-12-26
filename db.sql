@@ -173,3 +173,4 @@ $$
 
 DELIMITER ;
 
+-- vim: ft=mysql

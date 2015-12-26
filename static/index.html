@@ -6,7 +6,7 @@
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
 <div class='mika' ng-app='mika' ng-controller='MikaCtrl' layout='row'>
-	<md-sidenav class='sidenav md-sidenav md-sitenav-left' md-component-id='left' md-is-locked-open='$mdMedia("gt-sm")' flex layout-padding>
+	<md-sidenav class='sidenav md-sidenav md-sitenav-left' md-component-id='left' md-is-locked-open='$mdMedia("gt-sm")' flex layout-padding md-scroll-y>
 		<md-content>
 			<!-- threads -->
 			<md-list class='threadList'>
@@ -38,7 +38,7 @@
 			</md-button>
 		</md-toolbar>
 
-		<md-content ng-view md-scroll-y flex layout-padding>
+		<md-content class='main' ng-view flex layout-padding md-scroll-y>
 			<!-- create thread -->
 			<div class='create_thread_view' ng-if='viewStatus.main == MainViewType.createThread'>
 				<form class='post' ng-submit='postThread()'>

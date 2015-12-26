@@ -127,11 +127,14 @@ DELIMITER $$
 DROP TRIGGER IF EXISTS mika_insert_record $$
 CREATE TRIGGER mika_insert_record AFTER INSERT ON record FOR EACH ROW
 BEGIN
+	-- UPDATE thread.records += 1
 	UPDATE thread SET thread.records = thread.records+1
-	WHERE thread.id = NEW.thread_id;
+		WHERE thread.id = NEW.thread_id;
+
+	-- UPDATE thread.timestamp
 	IF NEW.timestamp > (SELECT thread.timestamp FROM thread WHERE NEW.thread_id = thread.id) THEN
 		UPDATE thread SET timestamp = NEW.timestamp
-		WHERE thread.id = NEW.thread_id;
+			WHERE thread.id = NEW.thread_id;
 	END IF;
 
 	IF NOT (
@@ -142,32 +145,40 @@ BEGIN
 		(NEW.pubkey IS NULL AND NEW.sign IS NULL AND NEW.target IS NULL) OR
 		(NEW.pubkey IS NOT NULL AND NEW.sign IS NOT NULL AND NEW.target IS NOT NULL)
 		)) THEN
+		-- Raise update error
 		UPDATE record SET thread_id = NULL;
 	END IF;
 END;
 $$
+
 DROP TRIGGER IF EXISTS mika_delete_record $$
 CREATE TRIGGER mika_delete_record AFTER DELETE ON record FOR EACH ROW
 BEGIN
+	-- UPDATE thread.records -= 1
 	UPDATE thread SET thread.records = thread.records-1
-	WHERE thread.id = OLD.thread_id;
+		WHERE thread.id = OLD.thread_id;
+
+	-- UPDATE thread.timestamp
 	INSERT INTO record_removed(thread_id, timestamp, bin_id)
-	VALUES(OLD.thread_id, OLD.bin_id, OLD.timestamp);
+		VALUES(OLD.thread_id, OLD.bin_id, OLD.timestamp);
 END;
 $$
 
 DROP TRIGGER IF EXISTS mika_insert_record_removed $$
 CREATE TRIGGER mika_insert_record_removed AFTER INSERT ON record_removed FOR EACH ROW
 BEGIN
+	-- UPDATE thread.records += 1
 	UPDATE thread SET thread.removed_records = thread.removed_records+1
-	WHERE thread.id = NEW.thread_id;
+		WHERE thread.id = NEW.thread_id;
 END;
 $$
+
 DROP TRIGGER IF EXISTS mika_delete_record_removed $$
 CREATE TRIGGER mika_delete_record_removed AFTER DELETE ON record_removed FOR EACH ROW
 BEGIN
+	-- UPDATE thread.records -= 1
 	UPDATE thread SET thread.removed_records = thread.removed_records-1
-	WHERE thread.id = OLD.thread_id;
+		WHERE thread.id = OLD.thread_id;
 END;
 $$
 

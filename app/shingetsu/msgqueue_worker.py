@@ -259,7 +259,8 @@ def _joinNetwork_findNodeWorker(host):
 def _joinNetwork_joinWorker(host):
 	try:
 		response = httpGet('http://' + host + '/join/' + settings.NODE_NAME).splitlines()
-		if response[0] != 'WELCOME':
+		# join出来なかった場合
+		if len(response) == 0 or response[0] != 'WELCOME':
 			return
 
 		with Session() as s:

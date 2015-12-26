@@ -136,9 +136,6 @@ BEGIN
 
 	IF NOT (
 		(
-		(NEW.attach IS NULL AND NEW.suffix IS NULL) OR
-		(NEW.attach IS NOT NULL AND NEW.suffix IS NOT NULL)
-		) AND (
 		(NEW.remove_id IS NULL) OR
 		(NEW.remove_id IS NOT NULL)
 		) AND (

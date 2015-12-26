@@ -1,5 +1,5 @@
 
--- version: 0.0.5
+-- version: 1.0.0
 DROP DATABASE IF EXISTS mika;
 CREATE DATABASE mika;
 USE mika;
@@ -9,7 +9,7 @@ CREATE TABLE SYSTEM(
 	value VARCHAR(255),
 	PRIMARY KEY(id)
 );
-INSERT INTO SYSTEM(id, value) VALUES('version', '0.0.5');
+INSERT INTO SYSTEM(id, value) VALUES('version', '1.0.0');
 
 CREATE TABLE thread(
 	-- titleのサイズは適当
@@ -32,7 +32,6 @@ CREATE TABLE record(
 	mail CHAR(255),
 	body MEDIUMTEXT NOT NULL,
 	-- attach
-	attach MEDIUMBLOB,
 	suffix CHAR(8),
 	-- remove_notify
 	remove_id BINARY(16),
@@ -44,7 +43,6 @@ CREATE TABLE record(
 	sign CHAR(64),
 	target CHAR(64),
 	-- raw
-	raw_body MEDIUMTEXT NOT NULL,
 	PRIMARY KEY(record_id),
 	UNIQUE(thread_id, timestamp, bin_id),
 	FOREIGN KEY(thread_id) REFERENCES thread(id)
@@ -55,6 +53,16 @@ CREATE TABLE record_removed(
 	bin_id BINARY(16),
 	PRIMARY KEY(thread_id, timestamp, bin_id),
 	FOREIGN KEY(thread_id) REFERENCES thread(id)
+);
+CREATE TABLE record_attach(
+	record_id INT UNSIGNED,
+	attach MEDIUMBLOB,
+	PRIMARY KEY(record_id)
+);
+CREATE TABLE record_raw(
+	record_id INT UNSIGNED,
+	raw_body MEDIUMTEXT NOT NULL,
+	PRIMARY KEY(record_id)
 );
 
 CREATE TABLE recent(
@@ -81,11 +89,13 @@ CREATE TABLE node(
 	host CHAR(64) PRIMARY KEY,
 	linked BOOLEAN NOT NULL DEFAULT false,
 	init BOOLEAN NOT NULL DEFAULT false,
-	timestamp TIMESTAMP
+	timestamp TIMESTAMP DEFAULT '1970-01-01 00:00:01',
+	-- error: エラー発生回数
+	error INT UNSIGNED NOT NULL DEFAULT 0
 );
-INSERT INTO node(host, timestamp, init) values
-	('node.shingetsu.info:8000/server.cgi', '1970-01-01 00:00:01', true),
-	('rep4649.ddo.jp:8000/server.cgi', '1970-01-01 00:00:01', true);
+INSERT INTO node(host, init) values
+	('node.shingetsu.info:8000/server.cgi', true),
+	('rep4649.ddo.jp:8000/server.cgi', true);
 
 CREATE TABLE message_type(
 	id INT UNSIGNED AUTO_INCREMENT,
@@ -106,10 +116,11 @@ INSERT INTO message_type(priority, name) values
 	(10, 'join'),
 	(20, 'ping'),
 	(30, 'search_other_node'),
-	(50, 'get_record'),
+	(50, 'get_and_update_record'),
 	(60, 'update_record'),
-	(70, 'get_thread'),
-	(80, 'get_recent');
+	(70, 'get_record'),
+	(80, 'get_thread'),
+	(90, 'get_recent');
 
 DELIMITER $$
 
@@ -165,3 +176,4 @@ $$
 
 DELIMITER ;
 
+-- vim: ft=mysql

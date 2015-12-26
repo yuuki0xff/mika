@@ -93,9 +93,9 @@ CREATE TABLE node(
 	-- error: エラー発生回数
 	error INT UNSIGNED NOT NULL DEFAULT 0
 );
-INSERT INTO node(host, timestamp, init) values
-	('node.shingetsu.info:8000/server.cgi', '1970-01-01 00:00:01', true),
-	('rep4649.ddo.jp:8000/server.cgi', '1970-01-01 00:00:01', true);
+INSERT INTO node(host, init) values
+	('node.shingetsu.info:8000/server.cgi', true),
+	('rep4649.ddo.jp:8000/server.cgi', true);
 
 CREATE TABLE message_type(
 	id INT UNSIGNED AUTO_INCREMENT,

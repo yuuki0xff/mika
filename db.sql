@@ -116,10 +116,11 @@ INSERT INTO message_type(priority, name) values
 	(10, 'join'),
 	(20, 'ping'),
 	(30, 'search_other_node'),
-	(50, 'get_record'),
+	(50, 'get_and_update_record'),
 	(60, 'update_record'),
-	(70, 'get_thread'),
-	(80, 'get_recent');
+	(70, 'get_record'),
+	(80, 'get_thread'),
+	(90, 'get_recent');
 
 DELIMITER $$
 

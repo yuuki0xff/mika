@@ -169,9 +169,9 @@ class Record(Base):
 		if rec:
 			session.delete(rec)
 		if force or rec:
-			session.add(RemovedRecord(thread_id=thread_id, timestamp=timestamp, bin_id=bin_id))
+			session.add(RecordRemoved(thread_id=thread_id, timestamp=timestamp, bin_id=bin_id))
 
-class RemovedRecord(Base):
+class RecordRemoved(Base):
 	__tablename__ = 'record_removed'
 	__table_args__ = {'autoload': True}
 

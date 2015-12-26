@@ -18,4 +18,5 @@ Authors
 Contributers
 ------------
 [*./static/lib/sanitize.js*] Gabriel Birke ( https://github.com/gbirke/Sanitize.js )
+[*./static/lib/angular-relative-date.min.js*] Joseph Wynn ( https://github.com/wildlyinaccurate/angular-relative-date )
 

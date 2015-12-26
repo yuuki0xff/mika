@@ -1,5 +1,6 @@
 /// <reference path="./typings/jquery/jquery.d.ts" />
 /// <reference path="./typings/angularjs/angular.d.ts" />
+/// <reference path="./typings/angular-material/angular-material.d.ts" />
 /// <reference path="./lib/sanitize.d.ts" />
 
 module Security{
@@ -325,7 +326,7 @@ module Models{
 			}
 			if(this.option.sorter.key){
 				var funcList = {
-					timestamp: (a: IRecord, b: IRecord)=>{ return a.timestamp - b.timestamp; },
+					timestamp: (a: IRecord, b: IRecord)=>{ return b.timestamp - a.timestamp; },
 				};
 				func = funcList[this.option.sorter.key];
 			}else{
@@ -535,9 +536,8 @@ module Models{
 
 module Controllers{
 	enum MainViewType{
-		"threadList",
+		"createThread",
 		"thread",
-		"newThread",
 	}
 	enum MenuViewType{
 		"tag",
@@ -547,14 +547,19 @@ module Controllers{
 	interface INewThread{
 		title: string;
 	}
+	interface IView{
+		main: MainViewType;
+	}
 
 	interface INewRecord extends Models.IRecord{}
+	interface INewRecordForm{
+		isOpen: boolean;
+	}
 
 	interface IScope extends angular.IScope{
 		MainViewType: any;
-		mainView: MainViewType;
 		MenuViewType: any;
-		menuView: MenuViewType;
+		viewStatus: IView;
 
 		threads: Models.IThreadList;
 		currentThread: Models.IThread;
@@ -563,20 +568,48 @@ module Controllers{
 		setCurrentThread(thread:Models.Thread): void;
 		switchMainView(viewType:MainViewType): void;
 		setMenuViewType(viewType:MenuViewType): void;
+		toggleSidenav(): void;
+		closeSidenav(): void;
 
+		newRecord: INewRecord;
+	}
+	interface IPostFormScope extends IScope{
+		useFullScreen: boolean;
 		newThread: INewThread;
+		newRecordForm: INewRecordForm;
+
 		postThread(): void;
-		newResponse: INewRecord;
-		postResponse(): void;
+		postRecord(): void;
+		showPostForm(event): void;
+		focus(event): void;
+	}
+	interface IPostFormDialogScope extends angular.IScope{
+		newRecord: INewRecord;
+
+		hide(): void;
+		cancel(): void;
+		post(): void;
 	}
 
 	export class MikaCtrl{
-		constructor(private $scope:IScope, $sce){
+		constructor(private $scope:IScope, $sce, private $mdSidenav){
 			$scope.MainViewType = MainViewType;
-			$scope.mainView = MainViewType.thread;
+			$scope.viewStatus = {
+				main: MainViewType.thread,
+			};
+
+			$scope.newRecord = <INewRecord>{
+				"name": null,
+				"mail": null,
+				"body": null,
+				"attach": null,
+				"suffix": null,
+			};
 
 			$scope.setCurrentThread = (thread:Models.Thread)=>{this.setCurrentThread(thread);};
 			$scope.switchMainView = (viewType:MainViewType)=>{this.switchMainView(viewType);};
+			$scope.toggleSidenav = ()=>{this.toggleSidenav();};
+			$scope.closeSidenav = ()=>{this.closeSidenav();};
 
 			var tl = new Models.ThreadList({
 				filter: {
@@ -607,7 +640,7 @@ module Controllers{
 							"error": ()=>{return;},
 						});
 					}else{
-						$scope.switchMainView(MainViewType.newThread);
+						$scope.switchMainView(MainViewType.createThread);
 					}
 					$scope.$apply();
 				},
@@ -628,47 +661,46 @@ module Controllers{
 			}
 		}
 		switchMainView(viewType:MainViewType){
-			this.$scope.mainView = viewType;
-			if(this.$scope.mainView != MainViewType.thread){
+			this.$scope.viewStatus.main = viewType;
+			if(this.$scope.viewStatus.main != MainViewType.thread){
 				this.$scope.currentThread = null;
 			}
 		}
-	}
-
-	export class MenuCtrl{
-		constructor(private $scope:IScope){
-			$scope.MenuViewType = MenuViewType;
-			$scope.menuView = MenuViewType.thread;
-
-			$scope.setMenuViewType = (viewType:MenuViewType)=>{this.setMenuViewType(viewType);};
+		toggleSidenav(){
+			this.$mdSidenav("left").toggle();
 		}
-
-		setMenuViewType(viewType:MenuViewType){
-			this.$scope.menuView = viewType;
+		closeSidenav(){
+			this.$mdSidenav("left").close();
 		}
 	}
 
 	export class ThreadCtrl{
-		constructor(private $scope:IScope, private $rootScope){
+		constructor(private $scope:IPostFormScope, private $rootScope, private $mdMedia, private $mdDialog){
 			$scope.newThread = <INewThread>{
 				"title": null,
 			};
-			$scope.postThread = ()=>{return this.postThread();};
-
-			$scope.newResponse = <INewRecord>{
-				"name": null,
-				"mail": null,
-				"body": null,
-				"attach": null,
-				"suffix": null,
+			$scope.newRecordForm = {
+				isOpen: false,
 			};
-			$scope.postResponse = ()=>{return this.postResponse();};
+			$scope.postThread = ()=>{return this.postThread();};
+			$scope.postRecord = ()=>{return this.postRecord();};
+
+			$scope.showPostForm = (ev)=>{return this.showPostForm(ev);};
+			$scope.$watch(()=>{
+				return $mdMedia("xs") || $mdMedia("sm");
+			}, (useFullScreen)=>{
+				$scope.useFullScreen = useFullScreen === true;
+			});
+			$scope.focus = (event)=>{
+				$scope.newRecordForm.isOpen = true;
+			};
 		}
 
 		postThread(){
 			this.$scope.threads.add(this.$scope.newThread.title, <API.IAjaxCallback>{
 				"success": (thread)=>{
 					this.$scope.setCurrentThread(thread);
+					this.$scope.newThread.title = null;
 					this.$rootScope.$apply();
 				},
 				"error": ()=>{return;},
@@ -676,12 +708,12 @@ module Controllers{
 			return false;
 		}
 
-		postResponse(){
+		postRecord(){
 			var callback = <API.IAjaxCallback>{
 				"success": ()=>{
 					this.$scope.currentThread.update({
 						"success": ()=>{
-							this.$scope.newResponse.body = "";
+							this.$scope.newRecord.body = "";
 							this.$scope.$apply();
 						},
 						"error": ()=>{return;},
@@ -689,14 +721,48 @@ module Controllers{
 				},
 				"error": ()=>{return;},
 			};
-			var record = this.$scope.newResponse;
+			var record = this.$scope.newRecord;
 			this.$scope.currentThread.post(record, callback);
+		}
+
+		showPostForm(event){
+			this.$mdDialog.show({
+				controller: PostFormDialogCtrl,
+				template: angular.element("#postFormDialog").html(),
+				parent: angular.element(".mika"),
+				targetEvent: event,
+				clickOutsideToClose: true,
+				fullscreen: this.$scope.useFullScreen,
+				scope: this.$scope.$new(),
+			}).then((ret)=>{
+				// post button clicked.
+				this.postRecord();
+			}, ()=>{
+				// cancelled.
+			});
+		};
+
+	}
+	export class PostFormDialogCtrl{
+		constructor(private $scope:IPostFormDialogScope, private $mdDialog){
+			$scope.hide = ()=>{return this.hide();};
+			$scope.cancel = ()=>{return this.cancel();};
+			$scope.post = ()=>{return this.post();};
+		}
+
+		hide(){
+			this.$mdDialog.hide();
+		}
+		cancel(){
+			this.$mdDialog.cancel();
+		}
+		post(){
+			this.$mdDialog.hide("post");
 		}
 	}
 }
 
-angular.module("mika", ["ngSanitize"])
+angular.module("mika", ["ngSanitize", "ngMaterial", "relativeDate"])
 .controller("MikaCtrl", Controllers.MikaCtrl)
-.controller("MenuCtrl", Controllers.MenuCtrl)
 .controller("ThreadCtrl", Controllers.ThreadCtrl);
 

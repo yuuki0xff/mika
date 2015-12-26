@@ -31,6 +31,9 @@ __all__ = "Session".split()
 tableNames = [
 		'Thread',
 		'Record',
+		'RecordRemoved',
+		'RecordAttach',
+		'RecordRaw',
 		'Recent',
 		'Tagname',
 		'Tag',
@@ -183,6 +186,14 @@ class RecordRemoved(Base):
 					cls.bin_id == bin_id,
 					cls.timestamp == datetime.fromtimestamp(timestamp)
 					)
+
+class RecordAttach(Base):
+	__tablename__ = 'record_removed'
+	__table_args__ = {'autoload': True}
+
+class RecordRaw(Base):
+	__tablename__ = 'record_removed'
+	__table_args__ = {'autoload': True}
 
 class Recent(Base):
 	__tablename__ = 'recent'

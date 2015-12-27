@@ -10,6 +10,7 @@ import core.settings as settings
 import logging
 import time
 import sqlalchemy.exc
+import socket
 log = logging.getLogger(__name__)
 
 def getRecord(msg):
@@ -217,32 +218,37 @@ def getThread(msg):
 		s.commit()
 		notify()
 
-def _doPing_worker(host):
+def _doPingWorker(host):
 	try:
 		response = httpGet('http://' + host + '/ping').splitlines()
 		with Session() as s:
 			node = Node.getThisNode(s, host).first()
 
-			if response[0].strip() != 'PONG':
+			if response[0].strip() != 'PONG': # bad response
 				node.linked = False
+				node.error += 1
 			else:
 				node.updateTimestamp()
-
-			if len(response) > 1:
-				newNodeHost = response[1].strip()
-				newNode = Node.getThisNode(s, newNodeHost).first()
-				if not newNode:
-					Node.add(s, newNodeHost)
+				# add other node
+				if len(response) > 1:
+					newNodeHost = response[1].strip()
+					newNode = Node.getThisNode(s, newNodeHost).first()
+					if not newNode:
+						Node.add(s, newNodeHost)
 			s.commit()
-	except URLError:
-		pass
+	except (socket.timeout, URLError):
+		with Session() as s:
+			node = Node.getThisNode(s, host).first()
+			node.linked = False
+			node.error += 1
+			s.commit()
 
 def doPing(msg):
 	with Session() as s:
 		queue = Queue()
 		for node in Node.getLinkedNode(s).all():
 			queue.put((node.host,))
-		multiThread(_doPing_worker, queue, maxWorkers=settings.MAX_CONNECTIONS)
+		multiThread(_doPingWorker, queue, maxWorkers=settings.MAX_CONNECTIONS)
 		MessageQueue.enqueue(s, msgtype='join', msg='init')
 
 def _joinNetwork_findNodeWorker(host):

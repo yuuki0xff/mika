@@ -257,8 +257,8 @@ class Node(Base):
 	def add(cls, session, addr):
 		node = Node()
 		node.host = addr
-		node.timestamp = datetime.now()
 		session.add(node)
+		return node
 
 	def updateTimestamp(self):
 		self.timestamp = datetime.now()

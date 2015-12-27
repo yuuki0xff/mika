@@ -225,10 +225,9 @@ def _doPingWorker(host):
 			node = Node.getThisNode(s, host).first()
 
 			if response[0].strip() != 'PONG': # bad response
-				node.linked = False
-				node.error += 1
+				node.error()
 			else:
-				node.updateTimestamp()
+				node.success()
 				# add other node
 				if len(response) > 1:
 					newNodeHost = response[1].strip()
@@ -239,8 +238,7 @@ def _doPingWorker(host):
 	except (socket.timeout, URLError):
 		with Session() as s:
 			node = Node.getThisNode(s, host).first()
-			node.linked = False
-			node.error += 1
+			node.error()
 			s.commit()
 
 def doPing(msg):

@@ -263,6 +263,14 @@ class Node(Base):
 	def updateTimestamp(self):
 		self.timestamp = datetime.now()
 
+	def success(self):
+		self.updateTimestamp()
+		self.error = min(0, self.error - 1)
+
+	def error(self):
+		self.linked = False
+		self.error += 1
+
 class MessageType(Base):
 	__tablename__ = 'message_type'
 	__table_args__ = {'autoload': True}

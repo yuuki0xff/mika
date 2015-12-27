@@ -253,12 +253,19 @@ def _joinNetwork_findNodeWorker(host):
 	try:
 		newHost = httpGet('http://' + host + '/node').strip()
 		with Session() as s:
+			node = Node.getThisNode(s, host).first()
+			node.success()
+			s.commit()
+
 			if Node.getThisNode(s, newHost).first():
 				return
 			Node.add(s, newHost)
 			s.commit()
-	except URLError:
-		pass
+	except (socket.timeout, URLError):
+		with Session() as s:
+			node = Node.getThisNode(s, host).first()
+			node.error()
+			s.commit()
 
 def _joinNetwork_joinWorker(host):
 	try:
@@ -269,21 +276,25 @@ def _joinNetwork_joinWorker(host):
 
 		with Session() as s:
 			node = Node.getThisNode(s, host).first()
-			if node:
-				node.linked = True
-			else:
-				Node.add(s, host)
+			if not node:
+				node = Node.add(s, host)
+			node.linked = True
+			node.success()
 			s.commit()
 
 		if len(response) == 2:
+			# add other node
 			newHost = response[1]
 			with Session() as s:
 				if Node.getThisNode(s, newHost).first():
 					return
 				Node.add(s, newHost)
 				s.commit()
-	except URLError:
-		pass
+	except (socket.timeout, URLError):
+		with Session() as s:
+			node = Node.getThisNode(s, host).first()
+			node.error()
+			s.commit()
 
 def _joinNetwork_doByeByeWorker(host):
 	try:
@@ -292,17 +303,23 @@ def _joinNetwork_doByeByeWorker(host):
 			node = Node.getThisNode(s, host).first()
 			if node:
 				node.linked = False
+				node.success()
 			s.commit()
 	except URLError:
-		pass
+		with Session() as s:
+			node = Node.getThisNode(s, host).first()
+			node.error()
+			s.commit()
 
 def joinNetwork(msg):
+	# find new node.
 	with Session() as s:
 		queue = Queue()
 		for node in Node.getInitNode(s).all():
 			queue.put((node.host,))
 	multiThread(_joinNetwork_findNodeWorker, queue, maxWorkers=settings.MAX_CONNECTIONS)
 
+	# join
 	with Session() as s:
 		linkedNodeCount = Node.getLinkedNode(s).count()
 		changeNodeCount = int(max(0, settings.MAX_NODES - linkedNodeCount) + settings.MAX_NODES/5)
@@ -312,6 +329,7 @@ def joinNetwork(msg):
 			queue.put((node.host,))
 	multiThread(_joinNetwork_joinWorker, queue, maxWorkers=settings.MAX_CONNECTIONS)
 
+	# bye
 	with Session() as s:
 		linkedNodes = Node.getLinkedNode(s).all()
 		shuffle(linkedNodes)

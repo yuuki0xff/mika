@@ -91,7 +91,7 @@ CREATE TABLE node(
 	init BOOLEAN NOT NULL DEFAULT false,
 	timestamp TIMESTAMP DEFAULT '1970-01-01 00:00:01',
 	-- error: エラー発生回数
-	error INT UNSIGNED NOT NULL DEFAULT 0
+	error_count INT UNSIGNED NOT NULL DEFAULT 0
 );
 INSERT INTO node(host, init) values
 	('node.shingetsu.info:8000/server.cgi', true),

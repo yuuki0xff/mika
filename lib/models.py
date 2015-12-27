@@ -265,11 +265,11 @@ class Node(Base):
 
 	def success(self):
 		self.updateTimestamp()
-		self.error = min(0, self.error - 1)
+		self.error_count = min(0, self.error_count - 1)
 
 	def error(self):
 		self.linked = False
-		self.error += 1
+		self.error_count += 1
 
 class MessageType(Base):
 	__tablename__ = 'message_type'

@@ -325,7 +325,7 @@ def joinNetwork(msg):
 		changeNodeCount = int(max(0, settings.MAX_NODES - linkedNodeCount) + settings.MAX_NODES/5)
 
 		queue = Queue()
-		for node in Node.getNotLinkedNode(s).limit(changeNodeCount).all():
+		for node in Node.getNotLinkedNode(s).order_by(Node.error_count).limit(changeNodeCount).all():
 			queue.put((node.host,))
 	multiThread(_joinNetwork_joinWorker, queue, maxWorkers=settings.MAX_CONNECTIONS)
 

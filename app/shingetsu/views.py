@@ -25,7 +25,9 @@ class node(View):
 		with Session() as s:
 			addr = request.META['REMOTE_ADDR']
 			response = HttpResponse()
-			node = Node.getOtherNode(s, addr).first()
+
+			# node: エラーの少ないノードを優先
+			node = Node.getOtherNode(s, addr).order_by(Node.error_count).first()
 			if node is not None:
 				response.write(str(node.host))
 			return response
@@ -38,7 +40,8 @@ class join(View):
 				addr = request.META['REMOTE_ADDR'] + addr
 			response = HttpResponse()
 			thisNode = Node.getThisNode(s, addr).first()
-			otherNode = Node.getOtherNode(s, addr).first()
+			# otherNode: エラーの少ないノードを優先
+			otherNode = Node.getOtherNode(s, addr).order_by(Node.error_count).first()
 			linkedNodeCount = Node.getLinkedNode(s).count()
 
 			welcome = False

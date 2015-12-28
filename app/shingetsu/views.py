@@ -1,11 +1,12 @@
 
 from django.views.generic import View
 from django.http import HttpResponse, HttpResponseBadRequest
-from lib.models import Session, Node, Thread, Record, Recent
-from app.shingetsu.utils import splitFileName, record2str, getTimeRange
+from lib.models import Session, Node, Thread, Record, RecordRaw, Recent
+from app.shingetsu.utils import splitFileName, getTimeRange
 from app.shingetsu.error import BadFileNameException, BadTimeRange
 from app.shingetsu import msgqueue
 from sqlalchemy.exc import IntegrityError
+import sqlalchemy.sql as sql
 from binascii import a2b_hex, b2a_hex
 import binascii
 from lib.utils import datetime2timestamp
@@ -115,10 +116,26 @@ class get(View):
 					title = a2b_hex(basename)
 				except binascii.Error:
 					return HttpResponseBadRequest()
-				thread_id = Thread.get(s, title=title).value(Thread.id)
-				allRecords = Record.gets(s, thread_id, stime, etime)
-				for line in record2str(allRecords, 1):
-					response.write(line)
+				query = sql.select([
+						Record.timestamp,
+						Record.bin_id,
+						RecordRaw.raw_body,
+					]).where(sql.and_(*(
+						[
+							Thread.id == Record.thread_id,
+							Thread.id == RecordRaw.thread_id,
+							Record.timestamp == RecordRaw.timestamp,
+							Record.bin_id == RecordRaw.bin_id,
+						] +
+						Thread.getFilter(title=title) +
+						Record.getFilter(stime=stime, etime=etime)
+					))).order_by(Record.timestamp)
+
+				for row in s.execute(query):
+					response.write(
+							str(datetime2timestamp(row[0])) + '<>' +
+							b2a_hex(row[1]).decode('ascii') +
+							row[2] + '\n')
 			return response
 
 class head(View):
@@ -140,10 +157,19 @@ class head(View):
 					title = a2b_hex(basename)
 				except binascii.Error:
 					return HttpResponseBadRequest()
-				thread_id = Thread.get(s, title=title).value(Thread.id)
-				allRecords = Record.gets(s, thread_id, stime, etime)
-				for line in record2str(allRecords, 0):
-					response.write(line)
+				query = sql.select([
+						Record.timestamp,
+						Record.bin_id,
+					]).where(sql.and_(*(
+						[Thread.id == Record.thread_id] +
+						Thread.getFilter(title=title) +
+						Record.getFilter(stime=stime, etime=etime)
+					))).order_by(Record.timestamp)
+
+				for row in s.execute(query):
+					response.write(
+							str(datetime2timestamp(row[0])) + '<>' +
+							b2a_hex(row[1]).decode('ascii') + '\n')
 			return response
 
 class update(View):

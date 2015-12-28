@@ -93,6 +93,12 @@ class Thread(Base):
 		if limit is not None:
 			query = query.limit(int(limit))
 		return query
+	@classmethod
+	def getFilter(cls, title=None):
+		filters = []
+		if title:
+			filters.append(cls.title == title)
+		return filters
 
 class Record(Base):
 	__tablename__ = 'record'
@@ -125,6 +131,20 @@ class Record(Base):
 					cls.bin_id == bin_id,
 					cls.timestamp == timestamp2datetime(timestamp)
 					)
+	@classmethod
+	def getFilter(cls, threadId=None, stime=None, etime=None, hexId=None, binId=None):
+		filters = []
+		if threadId:
+			filters.append(cls.thread_id == threadId)
+		if stime:
+			filters.append(cls.timestamp >= timestamp2datetime(stime))
+		if etime:
+			filters.append(cls.timestamp <= timestamp2datetime(etime))
+		if hexId:
+			binId = a2b_hex(hexId)
+		if binId:
+			filters.append(cls.bin_id == binId)
+		return filters
 	@classmethod
 	def getFirstTime(cls, session, thread_id):
 		rec = session.query(Record) \

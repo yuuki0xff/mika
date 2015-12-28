@@ -46,6 +46,7 @@ CREATE TABLE record(
 	PRIMARY KEY(record_id),
 	UNIQUE(thread_id, timestamp, bin_id),
 	FOREIGN KEY(thread_id) REFERENCES thread(id)
+		ON DELETE CASCADE
 );
 CREATE TABLE record_removed(
 	thread_id INT UNSIGNED,
@@ -53,6 +54,7 @@ CREATE TABLE record_removed(
 	bin_id BINARY(16),
 	PRIMARY KEY(thread_id, timestamp, bin_id),
 	FOREIGN KEY(thread_id) REFERENCES thread(id)
+		ON DELETE CASCADE
 );
 CREATE TABLE record_attach(
 	thread_id INT UNSIGNED NOT NULL,
@@ -61,6 +63,7 @@ CREATE TABLE record_attach(
 	attach MEDIUMBLOB,
 	PRIMARY KEY(thread_id, timestamp, bin_id),
 	FOREIGN KEY(thread_id, timestamp, bin_id) REFERENCES record(thread_id, timestamp, bin_id)
+		ON DELETE CASCADE
 );
 CREATE TABLE record_raw(
 	thread_id INT UNSIGNED NOT NULL,
@@ -69,6 +72,7 @@ CREATE TABLE record_raw(
 	raw_body MEDIUMTEXT NOT NULL,
 	PRIMARY KEY(thread_id, timestamp, bin_id),
 	FOREIGN KEY(thread_id, timestamp, bin_id) REFERENCES record(thread_id, timestamp, bin_id)
+		ON DELETE CASCADE
 );
 
 CREATE TABLE recent(
@@ -87,8 +91,8 @@ CREATE TABLE tag(
 	tag_id INT UNSIGNED,
 	thread_id INT UNSIGNED,
 	PRIMARY KEY(thread_id, tag_id),
-	FOREIGN KEY(thread_id) REFERENCES thread(id),
-	FOREIGN KEY(tag_id) REFERENCES tagname(id)
+	FOREIGN KEY(thread_id) REFERENCES thread(id) ON DELETE CASCADE,
+	FOREIGN KEY(tag_id) REFERENCES tagname(id) ON DELETE CASCADE
 );
 
 CREATE TABLE node(

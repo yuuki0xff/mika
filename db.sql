@@ -55,14 +55,20 @@ CREATE TABLE record_removed(
 	FOREIGN KEY(thread_id) REFERENCES thread(id)
 );
 CREATE TABLE record_attach(
-	record_id INT UNSIGNED,
+	thread_id INT UNSIGNED NOT NULL,
+	timestamp TIMESTAMP NOT NULL,
+	bin_id BINARY(16) NOT NULL,
 	attach MEDIUMBLOB,
-	PRIMARY KEY(record_id)
+	PRIMARY KEY(thread_id, timestamp, bin_id),
+	FOREIGN KEY(thread_id, timestamp, bin_id) REFERENCES record(thread_id, timestamp, bin_id)
 );
 CREATE TABLE record_raw(
-	record_id INT UNSIGNED,
+	thread_id INT UNSIGNED NOT NULL,
+	timestamp TIMESTAMP NOT NULL,
+	bin_id BINARY(16) NOT NULL,
 	raw_body MEDIUMTEXT NOT NULL,
-	PRIMARY KEY(record_id)
+	PRIMARY KEY(thread_id, timestamp, bin_id),
+	FOREIGN KEY(thread_id, timestamp, bin_id) REFERENCES record(thread_id, timestamp, bin_id)
 );
 
 CREATE TABLE recent(
@@ -184,4 +190,5 @@ $$
 
 DELIMITER ;
 
+set global max_allowed_packet = 10000000;
 -- vim: ft=mysql

@@ -24,9 +24,10 @@ def getRecord(msg):
 		else:
 			mode = 'multi'
 			addr, thread_id, timeRange = msg.msg.split()
+			thread_id = int(thread_id)
 
 		if mode == 'single' and Record.get(s, thread_id, bin_id, atime).value(Record.record_id):
-			log.isEnabledFor(logging.INFO) and log.info('getRecord: NOP {}/{}/{} {}'.format(thread_id, atime, hex_id, addr))
+			log.isEnabledFor(logging.INFO) and log.info('getRecord: NOP {}/{}/{} {}'.format(str(thread_id), atime, hex_id, addr))
 			return True
 
 		title = Thread.get(s, id=thread_id).value(Thread.title)
@@ -36,27 +37,12 @@ def getRecord(msg):
 		else:
 			http_addr = 'http://{}/get/{}/{}'.format(addr, filename, timeRange)
 		try:
-			for record in str2recordInfo(httpGet(http_addr)):
-				try:
-					timestamp, hex_id, body = record
-					bin_id = a2b_hex(hex_id)
-				except binascii.Error as e:
-					log.isEnabledFor(logging.INFO) and log.info('getRecord: Fail {} {} {}'.format(thread_id, http_addr, str(e)))
-					continue
-				try:
-					timestamp = int(timestamp)
-					if Record.get(s, thread_id, bin_id, timestamp).first():
-						continue
-					Record.add(s, thread_id, timestamp, bin_id, body)
-					log.isEnabledFor(logging.INFO) and log.info('getRecord: Add {}/{}/{} {}'.format(thread_id, timestamp, b2a_hex(bin_id), addr))
-					s.commit()
-				except (binascii.Error, sqlalchemy.exc.StatementError) as e:
-					log.isEnabledFor(logging.INFO) and log.info('getRecord: Fail {} {} {}'.format(thread_id, http_addr, str(e)))
-					s.rollback()
-					Record.delete(s, thread_id, timestamp, bin_id)
-					s.commit()
+			response = httpGet(http_addr)
+			if response:
+				Record.add(s, thread_id, recordStr=response)
+				s.commit()
 		except URLError as e:
-			log.isEnabledFor(logging.INFO) and log.info('getRecord: Fail {} {} {}'.format(thread_id, http_addr, str(e)))
+			log.isEnabledFor(logging.INFO) and log.info('getRecord: Fail {} {} {}'.format(str(thread_id), http_addr, str(e)))
 			return False
 		return True
 

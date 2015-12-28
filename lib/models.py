@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine
 import sqlalchemy.sql.expression as sql_func
+from sqlalchemy.sql import select
 from sqlalchemy.orm.session import sessionmaker
 from sqlalchemy.orm.scoping import scoped_session
 from sqlalchemy.ext.declarative import declarative_base
@@ -7,9 +8,12 @@ from contextlib import contextmanager
 from datetime import datetime
 from binascii import b2a_hex, a2b_hex
 from base64 import b64decode
+import hashlib
 from lib.utils import timestamp2str, timestamp2datetime, datetime2timestamp, str2timestamp
 import time
 from core import settings
+import logging
+log = logging.getLogger(__name__)
 
 engine = create_engine(settings.DB_ADDRESS, echo=False)
 Base = declarative_base()
@@ -140,32 +144,98 @@ class Record(Base):
 			return int(time.mktime(rec.timestamp.timetuple()))
 		return 0
 	@classmethod
-	def add(cls, session, thread_id, timestamp, bin_id, body):
-		fields = {}
-		for i in body.split('<>'):
-			fieldName, fieldValue = i.split(':', 1)
-			fields[fieldName] = fieldValue
+	def add(cls, session, thread_id, timestamp=None, bin_id=None, body=None, recordStr=None):
+		if not recordStr:
+			assert(timestamp and bin_id and body)
+			recordStr = '<>'.join((
+					str(int(timestamp)),
+					b2a_hex(bin_id).decode('ascii'),
+					body,
+					))
 
-		rec = Record()
-		rec.thread_id = thread_id
-		rec.bin_id = bin_id
-		rec.timestamp = datetime.fromtimestamp(timestamp)
-		rec.raw_body = body
-		rec.name = fields.get('name', '')
-		rec.mail = fields.get('mail', '')
-		rec.body = fields.get('body', '')
-		if 'remove_id' in fields:
-			rec.remove_id = a2b_hex(fields.get('remove_id'))
-			rec.remove_stamp = str2timestamp(fields.get('remove_stamp'))
-		if 'attach' in fields:
-			rec.attach = b64decode(fields['attach'])
-			rec.suffix = fields['suffix']
-		if 'pubkey' in fields:
-			rec.pubkey = fields.get('pubkey')
-			rec.sign = fields.get('sign')
-			rec.target = fields.get('target')
+		# bulk insert
+		fieldNames = {
+				'string': (
+					'name',
+					'mail',
+					'body',
+					'suffix',
+					'pubkey', 'sign', 'target',
+					),
+				'binId': (
+					'remove_id',
+					),
+				'datetime': (
+					 'remove_stamp',
+					),
+				}
+		records = []
+		rawRecords = []
+		attachRecords = []
+		for i, line in enumerate(recordStr.splitlines()):
+			recordInfo = line.split('<>', 2)
+			if len(recordInfo) != 3: # bad record
+				log.isEnabledFor(logging.INFO) and log.info('bad record')
+				continue
+			timestamp = timestamp2datetime(str2timestamp(recordInfo[0]))
+			binId = a2b_hex(recordInfo[1])
+			m = hashlib.md5()
+			m.update(recordInfo[2].encode('utf-8'))
 
-		session.add(rec)
+			if binId != m.digest(): # broken record
+				log.isEnabledFor(logging.INFO) and log.info('broken record')
+				continue
+
+			query = select([Record.record_id]).where(sql_func.and_(
+					Record.thread_id == thread_id,
+					Record.timestamp == timestamp,
+					Record.bin_id == binId,
+					))
+			if session.execute(query).first():
+				log.isEnabledFor(logging.INFO) and log.info(str(thread_id) + ' : ' + recordInfo[0] + '<>' + recordInfo[1] + ' : exists record')
+				continue
+
+			fields = {}
+			attach = None
+			for field in recordInfo[2].split('<>'):
+				fieldName, fieldValue = field.split(':', 1)
+				if fieldName in fieldNames['string']:
+					fields[fieldName] = fieldValue
+				elif fieldName in fieldNames['binId']:
+					fields[fieldName] = a2b_hex(fieldValue)
+				elif fieldName in fieldNames['datetime']:
+					fields[fieldName] = timestamp2datetime(str2timestamp(fieldValue))
+				elif fieldName == 'attach':
+					attach = fieldValue
+			fields['thread_id'] = thread_id
+			fields['timestamp'] = timestamp
+			fields['bin_id'] = binId
+			records.append(fields)
+			rawRecords.append({
+				'thread_id': thread_id,
+				'timestamp': timestamp,
+				'bin_id': binId,
+				'raw_body': recordInfo[2],
+				})
+			if attach:
+				attachRecords.append({
+					'thread_id': thread_id,
+					'timestamp': timestamp,
+					'bin_id': binId,
+					'attach': b64decode(attach),
+					})
+
+			if i % 1000 == 0:
+				session.bulk_insert_mappings(Record, records)
+				session.bulk_insert_mappings(RecordRaw, rawRecords)
+				session.bulk_insert_mappings(RecordAttach, attachRecords)
+				records.clear()
+				rawRecords.clear()
+				attachRecords.clear()
+		session.bulk_insert_mappings(Record, records)
+		session.bulk_insert_mappings(RecordRaw, rawRecords)
+		session.bulk_insert_mappings(RecordAttach, attachRecords)
+		return
 	@classmethod
 	def delete(cls, session, thread_id, timestamp, bin_id, force=False):
 		rec = cls.get(session, thread_id, bin_id, timestamp).first()

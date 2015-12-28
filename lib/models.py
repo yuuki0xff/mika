@@ -188,11 +188,11 @@ class RecordRemoved(Base):
 					)
 
 class RecordAttach(Base):
-	__tablename__ = 'record_removed'
+	__tablename__ = 'record_attach'
 	__table_args__ = {'autoload': True}
 
 class RecordRaw(Base):
-	__tablename__ = 'record_removed'
+	__tablename__ = 'record_raw'
 	__table_args__ = {'autoload': True}
 
 class Recent(Base):

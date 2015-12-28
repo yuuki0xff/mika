@@ -1,13 +1,9 @@
 
 from app.shingetsu.error import BadFileNameException, BadRecordException, BadTimeRange
-from lib.models import Record
 from lib.utils import datetime2timestamp
-import time
 from base64 import b64encode
 from datetime import datetime
-from binascii import b2a_hex
 from urllib.request import urlopen, Request
-import io
 import gzip
 import hashlib
 from core import settings
@@ -19,22 +15,6 @@ def splitFileName(fname):
 	if len(result) != 2:
 		raise BadFileNameException()
 	return result
-
-def record2str(query, include_body=True):
-	if not include_body:
-		query = query.with_entities(Record.bin_id, Record.timestamp, Record.raw_body)
-	for r in query:
-		if not include_body:
-			yield '<>'.join((
-					str(datetime2timestamp(r.timestamp)),
-					str(b2a_hex(r.bin_id).decode('utf-8')),
-				))+'\n'
-			continue
-		yield '<>'.join((
-				str(datetime2timestamp(r.timestamp)),
-				str(b2a_hex(r.bin_id).decode('utf-8')),
-				r.raw_body,
-			))+'\n'
 
 def getTimeRange(atime, starttime, endtime):
 	if atime:

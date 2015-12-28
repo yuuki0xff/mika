@@ -1,11 +1,11 @@
 
 from django.views.generic import View
 from django.http import JsonResponse, HttpResponse, HttpResponseNotFound, HttpResponseBadRequest
-from lib.models import Session, Thread, Record, RecordAttach, Recent, MessageQueue
+from lib.models import Session, Thread, Record, RecordAttach, RecordRaw, Recent, MessageQueue
 from lib.utils import datetime2timestamp
 from lib.msgqueue import notify
 from app.shingetsu.error import BadRecordException
-from sqlalchemy.sql import select
+import sqlalchemy.sql as sql
 from sqlalchemy.exc import IntegrityError
 from binascii import a2b_hex, b2a_hex
 from app.shingetsu.utils import makeRecordStr, str2recordInfo
@@ -180,10 +180,19 @@ class attach(View):
 		except KeyError:
 			return HttpResponseBadRequest()
 		with Session() as s:
-			attach = Record.get(s, thread_id, bin_id, timestamp).with_entities(Record.attach).first().attach
-		if attach:
-			return HttpResponse(attach)
-		return HttpResponseNotFound()
+			record = Record.get(s, thread_id, bin_id, timestamp).first()
+			if not record:
+				return HttpResponseNotFound()
+			query = sql.select([RecordAttach.attach])\
+					.where(sql.and_(*[
+						record.thread_id == RecordRaw.thread_id,
+						record.timestamp == RecordRaw.timestamp,
+						record.bin_id == RecordRaw.bin_id,
+					]))
+			row = s.execute(query).first()
+			if not row:
+				return HttpResponseNotFound()
+			return HttpResponse(row[0])
 	def head(self, request, *args, **kwargs):
 		try:
 			thread_id = int(kwargs['thread_id'])

@@ -1,11 +1,11 @@
 
 from django.views.generic import View
 from django.http import JsonResponse, HttpResponse, HttpResponseNotFound, HttpResponseBadRequest
-from lib.models import Session, Thread, Record, Recent, MessageQueue
+from lib.models import Session, Thread, Record, RecordAttach, Recent, MessageQueue
 from lib.utils import datetime2timestamp
 from lib.msgqueue import notify
 from app.shingetsu.error import BadRecordException
-from sqlalchemy.sql import func as sql_func
+from sqlalchemy.sql import select
 from sqlalchemy.exc import IntegrityError
 from binascii import a2b_hex, b2a_hex
 from app.shingetsu.utils import makeRecordStr, str2recordInfo
@@ -82,7 +82,6 @@ class records(View):
 						Record.name,
 						Record.mail,
 						Record.body,
-						sql_func.length(Record.attach).label('attach_len'),
 						Record.suffix).first()
 				if r:
 					records.append({
@@ -91,7 +90,7 @@ class records(View):
 						'name': r.name,
 						'mail': r.mail,
 						'body': r.body,
-						'attach': bool(r.attach_len),
+						'attach': bool(r.suffix),
 						'suffix': r.suffix,
 						})
 			else:
@@ -112,7 +111,6 @@ class records(View):
 							Record.name,
 							Record.mail,
 							Record.body,
-							sql_func.length(Record.attach).label('attach_len'),
 							Record.suffix)
 				for r in matchRecords:
 					records.append({
@@ -121,7 +119,7 @@ class records(View):
 						'name': r.name,
 						'mail': r.mail,
 						'body': r.body,
-						'attach': bool(r.attach_len),
+						'attach': bool(r.suffix),
 						'suffix': r.suffix,
 						})
 			obj = {

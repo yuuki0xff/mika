@@ -11,6 +11,8 @@ from binascii import a2b_hex, b2a_hex
 import binascii
 from lib.utils import datetime2timestamp
 from core import settings
+import logging
+log = logging.getLogger(__name__)
 
 __all__ = 'ping node join bye have get head update recent'.split()
 
@@ -192,14 +194,16 @@ class update(View):
 			if prefix=='thread':
 				if Recent.get(s, atime, id_bin, fileName).first():
 					return response
-				thread_id = Thread.get(s, title=title).value(Thread.id)
-				if thread_id:
-					msgqueue.getAndUpdateRecord(addr, thread_id, id_hex, atime)
 				try:
 					Recent.add(s, timestamp=atime, binId=id_bin, fileName=fileName)
 					s.commit()
-				except IntegrityError:
+				except IntegrityError as e:
 					s.rollback()
+					log.isEnabledFor(logging.INFO) and log.info(str(e))
+					return response
+				thread_id = Thread.get(s, title=title).value(Thread.id)
+				if thread_id:
+					msgqueue.getAndUpdateRecord(addr, thread_id, id_hex, atime)
 			return response
 
 class recent(View):

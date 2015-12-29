@@ -165,7 +165,7 @@ class Record(Base):
 		session.add(rec)
 	@classmethod
 	def delete(cls, session, thread_id, timestamp, bin_id, force=False):
-		rec = cls.get(session, thread_id, bin_id, timestamp).first()
+		rec = cls.get(session, thread_id, bin_id, timestamp2datetime(timestamp)).first()
 		if rec:
 			session.delete(rec)
 		if force or rec:
@@ -181,7 +181,7 @@ class RemovedRecord(Base):
 				.filter(
 					cls.thread_id == thread_id,
 					cls.bin_id == bin_id,
-					cls.timestamp == datetime.fromtimestamp(timestamp)
+					cls.timestamp == timestamp2datetime(timestamp)
 					)
 
 class Recent(Base):
@@ -192,20 +192,20 @@ class Recent(Base):
 	def gets(cls, session, stime=None, etime=None):
 		query = session.query(cls)
 		if stime:
-			query = query.filter(cls.timestamp >= stime)
+			query = query.filter(cls.timestamp >= timestamp2datetime(stime))
 		if etime:
-			query = query.filter(cls.timestamp <= etime)
+			query = query.filter(cls.timestamp <= timestamp2datetime(etime))
 		return query
 	@classmethod
 	def get(cls, session, timestamp, binId, fileName):
 		return session.query(cls).filter(
-				cls.timestamp == timestamp,
+				cls.timestamp == timestamp2datetime(timestamp),
 				cls.bin_id == binId,
 				cls.file_name == fileName,
 				)
 	@classmethod
 	def add(cls, session, timestamp, binId, fileName):
-		session.add(Recent(timestamp=datetime.fromtimestamp(timestamp), bin_id=binId, file_name=fileName))
+		session.add(Recent(timestamp=timestamp2datetime(timestamp), bin_id=binId, file_name=fileName))
 
 class Tagname(Base):
 	__tablename__ = 'tagname'

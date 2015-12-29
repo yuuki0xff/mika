@@ -185,9 +185,9 @@ class attach(View):
 				return HttpResponseNotFound()
 			query = sql.select([RecordAttach.attach])\
 					.where(sql.and_(*[
-						record.thread_id == RecordRaw.thread_id,
-						record.timestamp == RecordRaw.timestamp,
-						record.bin_id == RecordRaw.bin_id,
+						RecordAttach.thread_id == record.thread_id,
+						RecordAttach.timestamp == record.timestamp,
+						RecordAttach.bin_id == record.bin_id,
 					]))
 			row = s.execute(query).first()
 			if not row:
@@ -202,8 +202,8 @@ class attach(View):
 			return HttpResponseBadRequest()
 		with Session() as s:
 			if Record.get(s, thread_id, bin_id, timestamp).filter(
-					Record.attach is not None
-					).first().bin_id:
+					Record.suffix is not None
+					).first():
 				return HttpResponse()
 		return HttpResponseNotFound()
 

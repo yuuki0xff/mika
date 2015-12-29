@@ -178,7 +178,7 @@ class update(View):
 	def dispatch(self, request, *args, **kwargs):
 		with Session() as s:
 			try:
-				fileName = kwargs['file']
+				fileName = kwargs['file'].upper()
 				prefix, basename = splitFileName(kwargs['file'])
 				title = a2b_hex(basename)
 				atime = int(kwargs['time'])

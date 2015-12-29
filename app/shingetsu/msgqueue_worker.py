@@ -34,13 +34,20 @@ def getRecord(msg):
 			http_addr = 'http://{}/get/{}/{}'.format(addr, filename, atime)
 		else:
 			http_addr = 'http://{}/get/{}/{}'.format(addr, filename, timeRange)
+
+		node = Node.getThisNode(s, addr).first()
 		try:
 			response = httpGet(http_addr)
 			if response:
 				Record.add(s, thread_id, recordStr=response)
+				if not node:
+					node = Node.add(s, addr)
+				node.success()
 				s.commit()
-		except URLError as e:
+		except (socket.timeout, URLError) as e:
 			log.isEnabledFor(logging.INFO) and log.info('getRecord: Fail {} {} {}'.format(str(thread_id), http_addr, str(e)))
+			node and node.error()
+			s.commit()
 			return False
 		return True
 
@@ -49,9 +56,17 @@ def _updateRecord_httpGetWrapper(host, fname, time, hex_id, thread_id, nodeName)
 		url = 'http://{}/update/{}/{}/{}/{}'.format(host, fname, time, hex_id, nodeName)
 		httpGet(url)
 		log.isEnabledFor(logging.INFO) and log.info('updateRecord: Success {}/{}/{} {}'.format(thread_id, time, hex_id, host,))
+		with Session() as s:
+			node = Node.getThisNode(s, host).first()
+			node.success()
+			s.commit()
 		return True
-	except URLError as e:
+	except (socket.timeout, URLError) as e:
 		log.isEnabledFor(logging.INFO) and log.info('updateRecord: Error {}/{}/{} {} {}'.format(thread_id, time, hex_id, host, str(e),))
+		with Session() as s:
+			node = Node.getThisNode(s, host).first()
+			node.error()
+			s.commit()
 		return False
 
 def updateRecord(msg):
@@ -72,11 +87,16 @@ def updateRecord(msg):
 
 def _getRecent_worker(host):
 	urlSuffix = '/recent/0-'
-	try:
-		recent = httpGet('http://' + host + urlSuffix)
-	except URLError:
-		return
 	with Session() as s:
+		node = Node.getThisNode(s, host).first()
+		try:
+			recent = httpGet('http://' + host + urlSuffix)
+			node.success()
+		except (socket.timeout, URLError):
+			node.error()
+			s.commit()
+			return
+
 		fileNames = set()
 		for line in str2recordInfo(recent):
 			timestamp, recordId, fileName = line[0:3]
@@ -124,6 +144,7 @@ def getThread(msg):
 
 	with Session() as s:
 		host, fileName = msg.msg.split()
+		node = Node.getThisNode(s, host).first()
 
 		threadTitle = a2b_hex(fileName.split('_')[1]).decode('utf-8')
 		thread = Thread.get(s, title=threadTitle).first()
@@ -196,8 +217,10 @@ def getThread(msg):
 						MessageQueue.enqueue(s, msgtype='get_record', msg=' '.join([
 							host, str(thread.id), recordId, str(timestamp),
 							]))
-			except URLError as e:
-					log.isEnabledFor(logging.INFO) and log.info('getThread: Fail {} {} {}'.format(thread.id, url, str(e)))
+				node and node.success()
+			except (socket.timeout, URLError) as e:
+				log.isEnabledFor(logging.INFO) and log.info('getThread: Fail {} {} {}'.format(thread.id, url, str(e)))
+				node and node.error()
 
 		s.commit()
 		notify()
@@ -289,7 +312,7 @@ def _joinNetwork_doByeByeWorker(host):
 				node.linked = False
 				node.success()
 			s.commit()
-	except URLError:
+	except (socket.timeout, URLError):
 		with Session() as s:
 			node = Node.getThisNode(s, host).first()
 			node.error()

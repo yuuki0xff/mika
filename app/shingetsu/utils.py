@@ -4,7 +4,9 @@ from lib.utils import datetime2timestamp
 from base64 import b64encode
 from datetime import datetime
 from urllib.request import urlopen, Request
+from urllib.error import URLError
 import gzip
+import zlib
 import hashlib
 from core import settings
 import logging
@@ -38,7 +40,10 @@ def httpGet(http_addr):
 	request = Request(http_addr, headers=headers)
 	with urlopen(request, timeout=settings.HTTP_TIMEOUT) as httpsock:
 		if httpsock.info().get('Content-Encoding') == 'gzip':
-			return gzip.GzipFile(fileobj=httpsock, mode='rb').read().decode('utf-8')
+			try:
+				return gzip.GzipFile(fileobj=httpsock, mode='rb').read().decode('utf-8')
+			except (zlib.error, OSError) as e: # OSError: CRC error
+				raise URLError(e)
 		else:
 			return httpsock.read().decode('utf-8')
 

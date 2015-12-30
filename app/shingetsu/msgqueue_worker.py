@@ -180,8 +180,12 @@ def getThread(msg):
 			rate = None
 			try:
 				for timestamp, recordId in str2recordInfo(httpGet(url)):
-					timestamp = int(timestamp)
-					if Record.get(s, thread.id, a2b_hex(recordId), timestamp).first():
+					try:
+						timestamp = int(timestamp)
+						recordBinId = a2b_hex(recordId)
+					except (ValueError, binascii.Error): # bad record
+						continue
+					if Record.get(s, thread.id, recordBinId, timestamp).first():
 						if notExistsRecordCount:
 							_existsRecordCount += 1
 					else:

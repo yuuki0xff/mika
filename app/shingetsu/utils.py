@@ -42,7 +42,7 @@ def httpGet(http_addr):
 		if httpsock.info().get('Content-Encoding') == 'gzip':
 			try:
 				return gzip.GzipFile(fileobj=httpsock, mode='rb').read().decode('utf-8')
-			except (zlib.error, OSError) as e: # OSError: CRC error
+			except (zlib.error, OSError, EOFError) as e: # OSError: CRC error
 				raise URLError(e)
 		else:
 			return httpsock.read().decode('utf-8')

@@ -136,7 +136,7 @@ class get(View):
 				for row in s.execute(query):
 					response.write(
 							str(datetime2timestamp(row[0])) + '<>' +
-							b2a_hex(row[1]).decode('ascii') +
+							b2a_hex(row[1]).decode('ascii') + '<>' +
 							row[2] + '\n')
 			return response
 

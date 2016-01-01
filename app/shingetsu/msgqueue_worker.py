@@ -2,6 +2,7 @@ from app.shingetsu.utils import httpGet, str2recordInfo
 from lib.models import Session, Thread, Record, Node, MessageQueue
 from lib.msgqueue import multiThread, notify
 from urllib.error import URLError
+from http.client import HTTPException
 from binascii import a2b_hex
 import binascii
 from queue import Queue
@@ -44,7 +45,7 @@ def getRecord(msg):
 					node = Node.add(s, addr)
 				node.success()
 				s.commit()
-		except (socket.timeout, URLError) as e:
+		except (socket.timeout, URLError, HTTPException) as e:
 			log.isEnabledFor(logging.INFO) and log.info('getRecord: Fail {} {} {}'.format(str(thread_id), http_addr, str(e)))
 			node and node.error()
 			s.commit()
@@ -61,7 +62,7 @@ def _updateRecord_httpGetWrapper(host, fname, time, hex_id, thread_id, nodeName)
 			node.success()
 			s.commit()
 		return True
-	except (socket.timeout, URLError) as e:
+	except (socket.timeout, URLError, HTTPException) as e:
 		log.isEnabledFor(logging.INFO) and log.info('updateRecord: Error {}/{}/{} {} {}'.format(thread_id, time, hex_id, host, str(e),))
 		with Session() as s:
 			node = Node.getThisNode(s, host).first()
@@ -92,7 +93,7 @@ def _getRecent_worker(host):
 		try:
 			recent = httpGet('http://' + host + urlSuffix)
 			node.success()
-		except (socket.timeout, URLError):
+		except (socket.timeout, URLError, HTTPException):
 			node.error()
 			s.commit()
 			return
@@ -222,7 +223,7 @@ def getThread(msg):
 							host, str(thread.id), recordId, str(timestamp),
 							]))
 				node and node.success()
-			except (socket.timeout, URLError) as e:
+			except (socket.timeout, URLError, HTTPException) as e:
 				log.isEnabledFor(logging.INFO) and log.info('getThread: Fail {} {} {}'.format(thread.id, url, str(e)))
 				node and node.error()
 
@@ -246,7 +247,7 @@ def _doPingWorker(host):
 					if not newNode:
 						Node.add(s, newNodeHost)
 			s.commit()
-	except (socket.timeout, URLError):
+	except (socket.timeout, URLError, HTTPException):
 		with Session() as s:
 			node = Node.getThisNode(s, host).first()
 			node.error()
@@ -272,7 +273,7 @@ def _joinNetwork_findNodeWorker(host):
 				return
 			Node.add(s, newHost)
 			s.commit()
-	except (socket.timeout, URLError):
+	except (socket.timeout, URLError, HTTPException):
 		with Session() as s:
 			node = Node.getThisNode(s, host).first()
 			node.error()
@@ -301,7 +302,7 @@ def _joinNetwork_joinWorker(host):
 					return
 				Node.add(s, newHost)
 				s.commit()
-	except (socket.timeout, URLError):
+	except (socket.timeout, URLError, HTTPException):
 		with Session() as s:
 			node = Node.getThisNode(s, host).first()
 			node.error()
@@ -316,7 +317,7 @@ def _joinNetwork_doByeByeWorker(host):
 				node.linked = False
 				node.success()
 			s.commit()
-	except (socket.timeout, URLError):
+	except (socket.timeout, URLError, HTTPException):
 		with Session() as s:
 			node = Node.getThisNode(s, host).first()
 			node.error()

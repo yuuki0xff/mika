@@ -20,6 +20,15 @@ body{
 }
 
 .mika{
+	// 画面に表示しきれない非常に長い行は途中で省略する
+	.main_container{
+		overflow: hidden;
+	}
+	.record_list md-card-content .body{
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
 	form.post{
 		border-bottom: solid 1px $borderColor;
 

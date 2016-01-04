@@ -77,6 +77,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'lib.middleware.SQLAlchemySessionMiddleware',
 )
 
 ROOT_URLCONF = 'core.urls'

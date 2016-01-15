@@ -17,12 +17,12 @@ log = logging.getLogger(__name__)
 
 engine = create_engine(settings.DB_ADDRESS, echo=False)
 Base = declarative_base()
-_ScopedSession = scoped_session(sessionmaker(bind=engine))
+ScopedSession = scoped_session(sessionmaker(bind=engine))
 Base.metadata.bind = engine
 
 @contextmanager
 def Session():
-	s = _ScopedSession()
+	s = ScopedSession()
 	try:
 		yield s
 	except:

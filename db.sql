@@ -12,9 +12,11 @@ CREATE TABLE SYSTEM(
 INSERT INTO SYSTEM(id, value) VALUES('version', '1.0.0');
 
 CREATE TABLE thread(
-	-- titleのサイズは適当
+	-- Max key length is 767 bytes on mysql.
+	-- Therefore max title length is 191 char.
+
 	id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-	title CHAR(255) NOT NULL,
+	title CHAR(191) NOT NULL,
 	timestamp TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00',
 	records INT NOT NULL DEFAULT 0,
 	removed_records INT NOT NULL DEFAULT 0,
@@ -79,7 +81,7 @@ CREATE TABLE recent(
 	id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 	timestamp TIMESTAMP,
 	bin_id BINARY(16),
-	file_name CHAR(255),
+	file_name CHAR(191),
 	UNIQUE INDEX(timestamp, bin_id, file_name)
 );
 

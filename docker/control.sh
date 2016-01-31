@@ -20,6 +20,7 @@ MIKA_DB_AUTH=root:$MYSQL_ROOT_PASSWORD
 # if not use MySQL container, you must set MIKA_DB_ADDR variable.
 MIKA_DB_ADDR=                  # "<IP_ADDRESS>" or "<IP_ADDRESS>:<PORT>"
 MIKA_DB_NAME=mika
+MIKA_DB_OPT='charset=utf8mb4'  # parametor1=value1&parametor2=value2
 # if not use Nginx container, you must set MIKA_HOST_PORT variable.
 MIKA_HOST_PORT=                # "<PORT>" or "<IP_ADDRESS>:<PORT>"
 
@@ -70,6 +71,7 @@ startContainer(){
 					MIKA_DB_AUTH=$MIKA_DB_AUTH
 					MIKA_DB_ADDR=${MIKA_DB_ADDR:-}
 					MIKA_DB_NAME=$MIKA_DB_NAME
+					MIKA_DB_OPT=$MIKA_DB_OPT
 					MIKA_UID=$UID"
 			if [[ "${MIKA_HOST_PORT:-}" ]]; then
 				MIKA_OPT="-p $MIKA_HOST_PORT:3000"

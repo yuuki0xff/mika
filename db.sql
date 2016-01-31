@@ -170,7 +170,7 @@ BEGIN
 
 	-- UPDATE thread.timestamp
 	INSERT INTO record_removed(thread_id, timestamp, bin_id)
-		VALUES(OLD.thread_id, OLD.bin_id, OLD.timestamp);
+		VALUES(OLD.thread_id, OLD.timestamp, OLD.bin_id);
 END;
 $$
 

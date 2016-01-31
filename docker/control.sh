@@ -170,7 +170,7 @@ if (( $# )); then
 	shift
 	case "$cmd" in
 		auto)
-			if (( $LOG_BACKUP )) && [ "$(find $LOG_DIR/ -name '*.log')" ]; then
+			if (( $LOG_BACKUP )) && [ "$(find $LOG_DIR/ -maxdepth 1 -name '*.log')" ]; then
 				OLD_LOG_DIR=$LOG_DIR/$(date --rfc-3339=seconds |tr ' ' _)
 				mkdir -p $OLD_LOG_DIR
 				mv $LOG_DIR/*.log  $OLD_LOG_DIR

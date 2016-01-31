@@ -15,7 +15,7 @@ USE_MYSQL_CONTAINER=1
 MYSQL_ROOT_PASSWORD=root
 
 # Mika container settings.
-MIKA_DB_TYPE='mysql+mysqlconnector'
+MIKA_DB_TYPE='mysql+pymysql'
 MIKA_DB_AUTH=root:$MYSQL_ROOT_PASSWORD
 # if not use MySQL container, you must set MIKA_DB_ADDR variable.
 MIKA_DB_ADDR=                  # "<IP_ADDRESS>" or "<IP_ADDRESS>:<PORT>"

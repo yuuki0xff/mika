@@ -93,6 +93,7 @@ DATABASES = {
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.7/topics/i18n/
+# *** DON'T EDIT THESE VARIABLES ***
 
 LANGUAGE_CODE = 'en-us'
 

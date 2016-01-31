@@ -5,13 +5,31 @@ ROOT_DIR=${SELF%/*/*}
 LOG_DIR=${ROOT_DIR}/log
 mkdir -pm 700 $LOG_DIR
 
+# Docker image names.
 DOCKER_MYSQL=mika/mysql:latest
 DOCKER_NGINX=mika/nginx:latest
 DOCKER_MIKA=mika/mika:latest
 
-MYSQL_ROOT_PASSWORD=root #$(dd if=/dev/urandom|od -tx -w4 -An|head|tr -d ' \n')
+# MySQL container settings.
+USE_MYSQL_CONTAINER=1
+MYSQL_ROOT_PASSWORD=root
+
+# Mika container settings.
+MIKA_DB_TYPE='mysql+mysqlconnector'
+MIKA_DB_AUTH=root:$MYSQL_ROOT_PASSWORD
+# if not use MySQL container, you must set MIKA_DB_ADDR variable.
+MIKA_DB_ADDR=                  # "<IP_ADDRESS>" or "<IP_ADDRESS>:<PORT>"
+MIKA_DB_NAME=mika
+# if not use Nginx container, you must set MIKA_HOST_PORT variable.
+MIKA_HOST_PORT=                # "<PORT>" or "<IP_ADDRESS>:<PORT>"
+
+# Nginx container settings.
+USE_NGINX_CONTAINER=1
+NGINX_HOST_PORT=0.0.0.0:80     # "<PORT>" or "<IP_ADDRESS>:<PORT>"
 
 allContainer="mysql mika nginx"
+
+LOG_BACKUP=1
 
 INFO_DIR=/tmp/.mika-info-$UID
 mkdir -pm 700 $INFO_DIR
@@ -37,6 +55,7 @@ startContainer(){
 	fi
 	case $containerName in
 		mysql)
+			(( $USE_MYSQL_CONTAINER )) || return
 			echo MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD} |
 				docker run -d \
 					-v /var/lib/mysql \
@@ -46,22 +65,30 @@ startContainer(){
 			docker exec -i $(getCID mysql) mysql -uroot -p$MYSQL_ROOT_PASSWORD <$ROOT_DIR/db.sql
 			;;
 		mika)
-			echo MIKA_DB_AUTH=root:${MYSQL_ROOT_PASSWORD} |
+			MIKA_ENV="
+					MIKA_DB_TYPE=$MIKA_DB_TYPE
+					MIKA_DB_AUTH=$MIKA_DB_AUTH
+					MIKA_DB_ADDR=${MIKA_DB_ADDR:-}
+					MIKA_DB_NAME=$MIKA_DB_NAME
+					MIKA_UID=$UID"
+			if [[ "${MIKA_HOST_PORT:-}" ]]; then
+				MIKA_OPT="-p $MIKA_HOST_PORT:3000"
+			fi
+			echo "${MIKA_ENV}" |
 				docker run -d \
 					-v $ROOT_DIR:/srv:ro \
 					-v $LOG_DIR:/srv/log \
 					--link $(getCID mysql):mysql \
-					-e MIKA_DB_TYPE='mysql+mysqlconnector' \
-					-e MIKA_DB_NAME=mika \
-					-e MIKA_UID=$UID \
 					--env-file /dev/stdin \
+					${MIKA_OPT:-} \
 					$DOCKER_MIKA | cut -c1-12 >$INFO_DIR/$containerName
 			;;
 		nginx)
+			(( $USE_NGINX_CONTAINER )) || return
 			docker run -d \
 				-v $ROOT_DIR:/srv:ro \
 				--link $(getCID mika):mika \
-				-p 0.0.0.0:80:80 \
+				-p $NGINX_HOST_PORT:80 \
 				$DOCKER_NGINX | cut -c1-12 >$INFO_DIR/$containerName
 			;;
 	esac
@@ -141,6 +168,11 @@ if (( $# )); then
 	shift
 	case "$cmd" in
 		auto)
+			if (( $LOG_BACKUP )) && [ "$(find $LOG_DIR/ -name '*.log')" ]; then
+				OLD_LOG_DIR=$LOG_DIR/$(date --rfc-3339=seconds |tr ' ' _)
+				mkdir -p $OLD_LOG_DIR
+				mv $LOG_DIR/*.log  $OLD_LOG_DIR
+			fi
 			doAuto
 			;;
 		attach)

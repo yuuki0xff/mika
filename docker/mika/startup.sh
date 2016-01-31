@@ -1,6 +1,10 @@
 #!/bin/bash
 set -euv
-export MIKA_DB_ADDR=${MYSQL_PORT_3306_TCP#tcp://}
+
+if ! [ ${MIKA_DB_ADDR:-} ]; then
+	# set default value
+	export MIKA_DB_ADDR=${MYSQL_PORT_3306_TCP#tcp://}
+fi
 
 useradd -u ${MIKA_UID} -s /bin/sh -m mika
 mkdir -pm 770 /run/mika

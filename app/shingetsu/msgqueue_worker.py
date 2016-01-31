@@ -1,6 +1,6 @@
 from app.shingetsu.utils import httpGet, str2recordInfo
 from lib.models import Session, Thread, Record, Node, MessageQueue
-from lib.msgqueue import multiThread, notify
+from lib.multithread import multiThread, notify
 from urllib.error import URLError
 from http.client import HTTPException
 from binascii import a2b_hex

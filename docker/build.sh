@@ -1,7 +1,9 @@
 #!/bin/bash
 set -euv
 cd "${0%/*}"
-(cd mika; docker build -t mika/mika: .)
-(cd nginx; docker build -t mika/nginx: .)
-(cd mysql; docker build -t mika/mysql: .)
+
+REPOSITORY=mika
+(cd mika;  docker build -t ${REPOSITORY}/mika: .)
+(cd nginx; docker build -t ${REPOSITORY}/nginx: .)
+(cd mysql; docker build -t ${REPOSITORY}/mysql: .)
 
